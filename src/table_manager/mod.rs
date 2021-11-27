@@ -1,6 +1,7 @@
 use table_manager_v1::TableManagerV1;
 
 mod table_manager_v1;
+mod v1;
 
 pub enum TableManagerVersion {
     V1(TableManagerV1),

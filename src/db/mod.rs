@@ -1,4 +1,5 @@
 pub mod db_error;
+pub mod line;
 
 use std::io;
 use db_error::DbError;
@@ -27,7 +28,7 @@ impl Db {
         Ok(())
     }
 
-    pub fn insert(&self, tbl: &str) -> Result<(), DbError> {
+    pub fn insert(&self, tbl: &str, line: &line::Line) -> Result<(), DbError> {
         if tbl == "" {
             return Err(DbError::Custom(String::from("Missing table name")));
         }
@@ -35,9 +36,21 @@ impl Db {
         let manager = table_manager::get_table_manager(&self.path, tbl);
         
         match manager {
-            table_manager::TableManagerVersion::V1(m) => m.insert("Test line!")?
+            table_manager::TableManagerVersion::V1(m) => m.insert(line)?
         };
 
         Ok(())
     }
+
+    pub fn table(&self, tbl: &str) -> Vec<line::Line> {
+
+        let manager = table_manager::get_table_manager(&self.path, tbl);
+        
+        let lines = match manager {
+            table_manager::TableManagerVersion::V1(m) => m.read()
+        };
+
+        lines
+    }
+
 }
