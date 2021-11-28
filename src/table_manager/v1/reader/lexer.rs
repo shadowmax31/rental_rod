@@ -50,6 +50,43 @@ impl<'a> Lexer<'a> {
         s
     }
 
+    pub fn consume_if(&mut self, val_is: &str) {
+        match self.peek() {
+            Some(p) => {
+                if p == val_is {
+                    self.consume();
+                }
+            },
+            None => {}
+        }
+    }
+
+
+    pub fn consume_and_check(&mut self, check: &str) -> Result<(), String> {
+        let val = self.peek();
+
+        let mut consume = false;
+        if let Some(v) = val {
+            consume = v == check;
+        }
+
+        if consume {
+            self.consume();
+        }
+        else {
+            let mut msg = String::from("");
+            msg.push_str("Expected [");
+            msg.push_str(check);
+            msg.push_str("]");
+            msg.push_str(", but received [");
+            msg.push_str(val.unwrap_or(""));
+            msg.push_str("]");
+            return Err(msg);
+        }
+
+        Ok(())
+    }
+
     fn internal_peek_at(tokens: &Vec<&'a str>, index: usize) -> Option<&'a str> {
         if index >= tokens.len() {
             return None;
