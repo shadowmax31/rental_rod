@@ -1,6 +1,7 @@
 use crate::util::file;
 use crate::db::line::Line;
 use super::v1::line_to_str::line_to_str;
+use super::v1::reader;
 
 
 const TBL_EXT: &str = ".dt";
@@ -35,13 +36,8 @@ impl TableManagerV1 {
 
     pub fn read(&self) -> Vec<Line> {
         let raw = file::read(&self.tbl_path).unwrap_or(Vec::new());
-        let lines: Vec<Line> = Vec::new();
 
-        for line in raw {
-            
-        }
-
-        lines
+        reader::read(&raw)
     }
     
     fn create_table(&self) -> Result<(), std::io::Error> {

@@ -19,15 +19,11 @@ fn main() {
         process::exit(1)
     });
     
-    let line = new_test_line().unwrap();
-    db.insert("btc", &line).unwrap_or_else(|error| {
-        print_error("Error during the insert", error);
-    });
-
-    for f in line.fields {
-        println!("{}", f.value);
-    }
-
+    db.table("btc");
+    //let line = new_test_line().unwrap();
+    //db.insert("btc", &line).unwrap_or_else(|error| {
+    //    print_error("Error during the insert", error);
+    //});
 }
 
 fn print_error(details: &str, error: DbError) {
