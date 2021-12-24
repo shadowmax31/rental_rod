@@ -1,19 +1,19 @@
 mod parser;
 mod lexer;
 
-use lexer::Lexer;
 use parser::Parser;
+use lexer::Lexer;
+
 use crate::db::line::Line;
 
-pub fn read(lines: &Vec<String>) -> Vec<Line> {
+pub fn read(lines: &Vec<String>) -> Result<Vec<Line>, String> {
     let str_lines = &vec_to_str(lines);
     let mut lexer = Lexer::new(str_lines);
 
-    let p = Parser::new(&mut lexer);
+    let p = Parser::new(&mut lexer)?;
+    
 
-    println!("{:?}", p);
-
-    Vec::new()
+    Ok(p.lines)
 }
 
 fn vec_to_str(lines: &Vec<String>) -> String {

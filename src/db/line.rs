@@ -10,6 +10,15 @@ pub struct Field {
     pub value: String
 }
 
+impl Field {
+    pub fn new(name: &str, value: &str) -> Field {
+        Field { 
+            name: String::from(name), 
+            value: String::from(value) 
+        }
+    }
+}
+
 impl Line {
     pub fn new(fields: Vec<Field>) -> Option<Line> {
         let id = Uuid::new_v4();

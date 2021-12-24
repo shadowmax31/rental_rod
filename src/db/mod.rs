@@ -1,5 +1,6 @@
 pub mod db_error;
 pub mod line;
+pub mod table;
 
 use std::io;
 use db_error::DbError;
@@ -42,15 +43,17 @@ impl Db {
         Ok(())
     }
 
-    pub fn table(&self, tbl: &str) -> Vec<line::Line> {
-
+    pub fn table(&self, tbl: &str) -> Result<Vec<line::Line>, DbError> {
         let manager = table_manager::get_table_manager(&self.path, tbl);
         
         let lines = match manager {
             table_manager::TableManagerVersion::V1(m) => m.read()
         };
 
-        lines
+        match lines {
+            Ok(lines) => Ok(lines),
+            Err(msg) => Err(DbError::Custom(msg))
+        }
     }
 
 }

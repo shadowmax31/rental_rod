@@ -19,11 +19,15 @@ fn main() {
         process::exit(1)
     });
     
-    db.table("btc");
-    //let line = new_test_line().unwrap();
-    //db.insert("btc", &line).unwrap_or_else(|error| {
-    //    print_error("Error during the insert", error);
-    //});
+    match db.table("btc") {
+        Err(err) => print_error("Error when reading the table", err),
+        _ => ()
+    };
+
+    let line = new_test_line().unwrap();
+    db.insert("btc", &line).unwrap_or_else(|error| {
+        print_error("Error during the insert", error);
+    });
 }
 
 fn print_error(details: &str, error: DbError) {
@@ -32,22 +36,13 @@ fn print_error(details: &str, error: DbError) {
 
 fn new_test_line() -> Option<Line> {
     let mut fields: Vec<Field> = Vec::new();
-    let mut field = Field {
-        name: String::from("col1"),
-        value: String::from("123")
-    };
+    let mut field = Field::new("col1", "123");
     fields.push(field);
 
-    field = Field {
-        name: String::from("col2"),
-        value: String::from("456")
-    };
+    field = Field::new("col2", "456");
     fields.push(field);
 
-    field = Field {
-        name: String::from("col3"),
-        value: String::from("789")
-    };
+    field = Field::new("col3", "789");
     fields.push(field);
 
     Line::new(fields)

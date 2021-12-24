@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Debug)]
 pub enum DbError {
     Custom(String),
     IoError(std::io::Error),

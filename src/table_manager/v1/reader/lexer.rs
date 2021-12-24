@@ -18,10 +18,12 @@ impl<'a> Lexer<'a> {
         while i < text.len() {
             if let Some(c) = text.chars().nth(i) {
                 if c == ' ' || c == '[' || c == ']' || c == '"' || c == '#' || c == ':' {
-                    if start_token+1 < i {
+                    if start_token + 1 < i {
+                        // Push token
                         self.tokens.push(&text[start_token+1..i]);
                     }
 
+                    // Push token seprator
                     self.tokens.push(&text[i..i+1]);
                     start_token = i;
                 }
@@ -101,7 +103,7 @@ impl<'a> Lexer<'a> {
 }
 
 impl<'a> std::fmt::Debug for Lexer<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         println!("Debug: token");
         for token in &self.tokens {
             println!("{:?}", token);
@@ -113,31 +115,33 @@ impl<'a> std::fmt::Debug for Lexer<'a> {
 
 #[test]
 fn test_peek_peek_at() {
-    let s = "#v1.0[_id:\"1a4b2b21-c0ec-4857-8f06-454068c4cc6c\" col1:\"123\" col2:\"two  spaces#\" col3:\"789\"]";
+    let s = "#v1.0#[_id:\"1a4b2b21-c0ec-4857-8f06-454068c4cc6c\" col1:\"123\" col2:\"two  spaces#\" col3:\"789\"]";
     let lexer = Lexer::new(s);
 
     assert_eq!(lexer.peek().unwrap(), "#");
     assert_eq!(lexer.peek_at(1).unwrap(), "v1.0");
-    assert_eq!(lexer.peek_at(2).unwrap(), "[");
-    assert_eq!(lexer.peek_at(3).unwrap(), "_id");
-    assert_eq!(lexer.peek_at(5).unwrap(), "\"");
+    assert_eq!(lexer.peek_at(2).unwrap(), "#");
+    assert_eq!(lexer.peek_at(3).unwrap(), "[");
+    assert_eq!(lexer.peek_at(4).unwrap(), "_id");
+    assert_eq!(lexer.peek_at(6).unwrap(), "\"");
 }
 
 #[test]
 fn test_consume() {
-    let s = "#v1.0[_id:\"1a4b2b21-c0ec-4857-8f06-454068c4cc6c\" col1:\"123\" col2:\"two  spaces#\" col3:\"789\"]";
+    let s = "#v1.0#[_id:\"1a4b2b21-c0ec-4857-8f06-454068c4cc6c\" col1:\"123\" col2:\"two  spaces#\" col3:\"789\"]";
     let mut lexer = Lexer::new(s);
 
     assert_eq!(lexer.consume().unwrap(), "#");
     assert_eq!(lexer.peek().unwrap(), "v1.0");
-    assert_eq!(lexer.peek_at(1).unwrap(), "[");
+    assert_eq!(lexer.peek_at(2).unwrap(), "[");
     assert_eq!(lexer.consume().unwrap(), "v1.0");
+    assert_eq!(lexer.consume().unwrap(), "#");
     assert_eq!(lexer.peek().unwrap(), "[");
 }
 
 #[test]
 fn test_consume_all() {
-    let s = "#v1.0[_id:\"test\"]";
+    let s = "#v1.0#[_id:\"test\"]";
     let mut lexer = Lexer::new(s);
 
     let mut num_of_consume = 0;
@@ -154,4 +158,20 @@ fn test_consume_all() {
     assert_eq!(lexer.count(), num_of_consume - 1);
     assert_eq!(lexer.peek(), None);
     assert_eq!(last_peek, "]");
+}
+
+#[test]
+fn test_init_empty() {
+    let s = "";
+    let lexer = Lexer::new(s);
+
+    assert_eq!(lexer.count(), 0);
+}
+
+#[test]
+fn test_init_version_only() {
+    let s = "#v1.0#";
+    let lexer = Lexer::new(s);
+
+    assert_eq!(lexer.count(), 3);
 }

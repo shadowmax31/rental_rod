@@ -9,17 +9,6 @@ pub enum FileError {
     IoError(io::Error)
 }
 
-pub fn insert(path: &str, line: &str) -> Result<(), io::Error > {
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
-
-    writeln!(file, "{}", line)?;
-
-    Ok(())
-}
-
 pub fn read(path: &str) -> Result<Vec<String>, FileError>  {
     let file = match File::open(path) {
         Ok(v) => v,
@@ -30,9 +19,21 @@ pub fn read(path: &str) -> Result<Vec<String>, FileError>  {
     Ok(buf.lines().map(|l| l.expect("Cannot parse line")).collect())
 }
 
-pub fn write(path: &str, lines: &Vec<String>) -> Result<(), io::Error> {
+pub fn insert(path: &str, line: &str) -> Result<(), io::Error> {
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+
+    writeln!(file, "{}", line)?;
+
+    Ok(())
+}
+
+pub fn write(path: &str, version: &str, lines: &Vec<String>) -> Result<(), io::Error> {
     remove_file(path)?;
 
+    insert(path, version)?;
     for line in lines {
         insert(path, line)?;
     }
@@ -40,7 +41,7 @@ pub fn write(path: &str, lines: &Vec<String>) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn remove_file(s_path: &str) -> Result<(), io::Error> {
+pub fn remove_file(s_path: &str) -> Result<(), io::Error> {
     let path = Path::new(s_path);
     if path.exists() {
         std::fs::remove_file(s_path)?;

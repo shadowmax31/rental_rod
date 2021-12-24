@@ -6,7 +6,7 @@ use crate::db::line::Field;
 
 pub struct Parser {
     version: String,
-    lines: Vec<Line>
+    pub lines: Vec<Line>
 }
 
 impl Parser {
@@ -17,17 +17,10 @@ impl Parser {
         Ok(p)
     }
 
-    pub fn get_version(&self) -> &str {
-        &self.version
-    }
-
-    pub fn get_lines(&self) -> &Vec<Line> {
-        &self.lines
-    }
-
     pub fn init(&mut self, lexer: &mut Lexer) -> Result<(), String> {
         lexer.consume_and_check("#")?;
         self.version = lexer.consume().unwrap().to_owned();
+        lexer.consume_and_check("#")?;
 
         loop {
             match lexer.peek() {
@@ -114,7 +107,7 @@ impl Parser {
 }
 
 impl std::fmt::Debug for Parser {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         println!("Debug - Parser");
         for line in &self.lines {
             println!("ID: {}", line.id);
@@ -129,13 +122,13 @@ impl std::fmt::Debug for Parser {
 
 #[test]
 fn test_parser() {
-    let to_parser = "#v1.0[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]";
+    let to_parser = "#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]";
 
     let mut l = Lexer::new(to_parser);
     let p = Parser::new(&mut l).unwrap();
-    let lines = p.get_lines();
+    let lines = p.lines;
 
-    assert_eq!(p.get_version(), "v1.0");
+    assert_eq!(p.version, "v1.0");
 
     assert_eq!(lines[0].id, Uuid::parse_str("5435c914-a918-4cc7-8354-e55ff04d9e25").unwrap());
     assert_eq!(lines[0].fields[0].name, "col1");
