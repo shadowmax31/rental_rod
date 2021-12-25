@@ -1,3 +1,5 @@
+use crate::db::db_error::DbError;
+
 pub struct Lexer<'a> {
     tokens: Vec<&'a str>,
     index: usize
@@ -64,7 +66,7 @@ impl<'a> Lexer<'a> {
     }
 
 
-    pub fn consume_and_check(&mut self, check: &str) -> Result<(), String> {
+    pub fn consume_and_check(&mut self, check: &str) -> Result<(), DbError> {
         let val = self.peek();
 
         let mut consume = false;
@@ -83,7 +85,7 @@ impl<'a> Lexer<'a> {
             msg.push_str(", but received [");
             msg.push_str(val.unwrap_or(""));
             msg.push_str("]");
-            return Err(msg);
+            return Err(DbError::Custom(msg));
         }
 
         Ok(())

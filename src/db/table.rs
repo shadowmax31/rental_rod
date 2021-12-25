@@ -65,6 +65,11 @@ impl Table {
 
         found
     }
+
+    pub fn insert(&mut self, line: Line) {
+        self.lines.push(line);
+    }
+
 }
 
 #[test]

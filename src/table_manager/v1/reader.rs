@@ -4,9 +4,9 @@ mod lexer;
 use parser::Parser;
 use lexer::Lexer;
 
-use crate::db::line::Line;
+use crate::db::{line::Line, db_error::DbError};
 
-pub fn read(lines: &Vec<String>) -> Result<Vec<Line>, String> {
+pub fn read(lines: &Vec<String>) -> Result<Vec<Line>, DbError> {
     let str_lines = &vec_to_str(lines);
     let mut lexer = Lexer::new(str_lines);
 

@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use super::lexer::Lexer;
+use crate::db::db_error::DbError;
 use crate::db::line::Line;
 use crate::db::field::Field;
 
@@ -10,14 +11,14 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(lexer: &mut Lexer) -> Result<Parser, String> {
+    pub fn new(lexer: &mut Lexer) -> Result<Parser, DbError> {
         let mut p = Parser { version: String::from(""), lines: vec![] };
         p.init(lexer)?;
 
         Ok(p)
     }
 
-    pub fn init(&mut self, lexer: &mut Lexer) -> Result<(), String> {
+    pub fn init(&mut self, lexer: &mut Lexer) -> Result<(), DbError> {
         lexer.consume_and_check("#")?;
         self.version = lexer.consume().unwrap().to_owned();
         lexer.consume_and_check("#")?;
@@ -30,7 +31,8 @@ impl Parser {
                         self.lines.push(Self::parse_line(lexer)?);
                     }
                     else {
-                        return Err(String::from("Unexpected token!"));
+                        let msg = String::from("Unexpected token!");
+                        return Err(DbError::Custom(msg));
                     }
                 }
             }
@@ -39,7 +41,7 @@ impl Parser {
         Ok(())
     }
 
-    fn parse_line(lexer: &mut Lexer) -> Result<Line, String> {
+    fn parse_line(lexer: &mut Lexer) -> Result<Line, DbError> {
         lexer.consume_and_check("[")?;
 
         lexer.consume_and_check("_id")?;
@@ -77,7 +79,7 @@ impl Parser {
         Ok(Line { id, fields })
     }
 
-    fn loop_for_value(lexer: &mut Lexer) -> Result<String, String> {
+    fn loop_for_value(lexer: &mut Lexer) -> Result<String, DbError> {
         let mut value = String::from("");
         lexer.consume_and_check("\"")?;
 

@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{self, BufRead};
+use std::vec;
 
 use crate::db::db_error::DbError;
 use crate::db::table::Table;
@@ -12,11 +13,12 @@ const TBL_EXT: &str = ".dt";
 const TBL_VERSION: &str = "#v1.0#";
 
 pub struct TableManagerV1 {
-    tbl_path: String
+    tbl_path: String,
+    tbl_name: String
 }
 
 impl TableManagerV1 {
-    pub fn new(base_path: &str, tbl: &str) -> TableManagerV1 {
+    pub fn new(base_path: &str, tbl: &str) -> Result<TableManagerV1, DbError> {
         let with_ext = tbl.to_owned() + TBL_EXT;
 
         let fullpath = std::path::Path::new(&base_path).join(with_ext); 
@@ -26,41 +28,45 @@ impl TableManagerV1 {
         }
 
         let m = TableManagerV1 {
-            tbl_path: String::from(fullpath)
+            tbl_path: String::from(fullpath),
+            tbl_name: String::from(tbl)
         };
+        m.create()?;
 
-        m
+        Ok(m)
     }
 
-    pub fn delete_all(&self) -> Result<(), io::Error> {
+    pub fn drop(&self) -> Result<(), io::Error> {
         file::remove_file(&self.tbl_path)?;
 
         Ok(())
     }
 
-    pub fn insert(&self, line: &Line) -> Result<(), DbError> {
-        self.create_table()?;
-
-        match self.read() {
-           Ok(v) => {
-            let mut lines = TableManagerV1::convert_to_str(&v);
-            lines.push(line_to_str(line));
-
-            file::write(&self.tbl_path, TBL_VERSION, &lines)?;
-           },
-           Err(msg) => {
-               return Err(DbError::Custom(msg));
-           }
-        }        
+    pub fn create(&self) -> Result<(), std::io::Error> {
+        let path = std::path::Path::new(&self.tbl_path);
+        if !path.exists() {
+            file::insert(&self.tbl_path, TBL_VERSION)?;
+        }
 
         Ok(())
     }
 
-    pub fn read(&self) -> Result<Vec<Line>, String> {
-        let raw = file::read(&self.tbl_path).unwrap_or(Vec::new());
-        let r = reader::read(&raw)?;
+    pub fn write(&self, tbl: &Table) -> Result<(), DbError> {
+        let lines = TableManagerV1::convert_to_str(&tbl.lines);
+        file::write(&self.tbl_path, TBL_VERSION, &lines)?;
 
-        Ok(r)
+        Ok(())
+    }
+
+    pub fn read(&self) -> Result<Table, DbError> {
+        let raw = file::read(&self.tbl_path).unwrap_or(Vec::new());
+
+        let mut lines = vec![];
+        if raw.len() > 0 {
+            lines = reader::read(&raw)?;
+        }
+
+        Table::new(&self.tbl_name, lines)
     }
 
     fn convert_to_str(lines: &Vec<Line>) -> Vec<String> {
@@ -71,29 +77,22 @@ impl TableManagerV1 {
 
         str_lines
     }
-
-    fn create_table(&self) -> Result<(), std::io::Error> {
-        let path = std::path::Path::new(&self.tbl_path);
-        if !path.exists() {
-            file::insert(&self.tbl_path, TBL_VERSION)?;
-        }
-
-        Ok(())
-    }
 }
 
 #[test]
 fn test_delete() {
     let tbl = "test_delete";
-    let m = TableManagerV1::new("/tmp/", tbl);
+    let m = TableManagerV1::new("/tmp/", tbl).unwrap();
+    m.drop().unwrap();
+
     _insert(&m);
     _insert(&m);
     _insert(&m);
     assert_eq!(_count_lines(&m.tbl_path), 4);
 
-    let m = TableManagerV1::new("/tmp/", tbl);
+    let m = TableManagerV1::new("/tmp/", tbl).unwrap();
     assert_eq!(_count_lines(&m.tbl_path), 4);
-    m.delete_all().unwrap();
+    m.drop().unwrap();
     assert_eq!(_count_lines(&m.tbl_path), 0);
 
     _insert(&m);
@@ -101,20 +100,20 @@ fn test_delete() {
     _insert(&m);
     assert_eq!(_count_lines(&m.tbl_path), 4);
 
-    let m = TableManagerV1::new("/tmp/", tbl);
+    let m = TableManagerV1::new("/tmp/", tbl).unwrap();
     _insert(&m);
     _insert(&m);
     assert_eq!(_count_lines(&m.tbl_path), 6);
 
-    m.delete_all().unwrap();
+    m.drop().unwrap();
     assert_eq!(_count_lines(&m.tbl_path), 0);
 }
 
 
 #[test]
 fn test_insert() {
-    let m = TableManagerV1::new("/tmp/", "test_insert");
-    m.delete_all().unwrap();
+    let m = TableManagerV1::new("/tmp/", "test_insert").unwrap();
+    m.drop().unwrap();
 
     _insert(&m);
     _insert(&m);
@@ -122,27 +121,31 @@ fn test_insert() {
     _insert(&m);
 
     assert_eq!(_count_lines(&m.tbl_path), 5);
+
+    m.drop().unwrap();
 }
 
 #[test]
 fn test_read() {
-   let m = TableManagerV1::new("/tmp", "test_read");
+   let m = TableManagerV1::new("/tmp", "test_read").unwrap();
 
    _insert(&m);
    _insert(&m);
    _insert(&m);
 
-   let lines = m.read().unwrap();
-   assert_eq!(lines.len(), 3);
+   let table = m.read().unwrap();
+   assert_eq!(table.lines.len(), 3);
 
-   m.delete_all().unwrap();
+   m.drop().unwrap();
 }
 
 fn _insert(m: &TableManagerV1) {
+    let mut table = m.read().unwrap();
     let fields = vec![ crate::db::field::Field::new("Col1", "123") ];
     let line = Line::new(fields);
-
-    assert_eq!(m.insert(&line).unwrap(), ());
+    table.insert(line);
+    
+    assert_eq!(m.write(&table).unwrap(), ());
 }
 
 fn _count_lines(path: &str) -> usize {

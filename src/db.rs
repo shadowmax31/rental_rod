@@ -32,31 +32,25 @@ impl Db {
         Ok(())
     }
 
-    pub fn insert(&self, tbl: &str, line: &line::Line) -> Result<(), DbError> {
-        if tbl == "" {
-            return Err(DbError::Custom(String::from("Missing table name")));
-        }
-
-        let manager = table_manager::get_table_manager(&self.path, tbl);
-        
-        match manager {
-            table_manager::TableManagerVersion::V1(m) => m.insert(line)?
-        };
-
-        Ok(())
-    }
-
     pub fn table(&self, tbl: &str) -> Result<Table, DbError> {
-        let manager = table_manager::get_table_manager(&self.path, tbl);
+        let manager = table_manager::get_table_manager(&self.path, tbl)?;
         
-        let lines = match manager {
+        let table = match manager {
             table_manager::TableManagerVersion::V1(m) => m.read()
         };
 
-        match lines {
-            Ok(lines) => Ok(Table::new(tbl, lines)?),
-            Err(msg) => Err(DbError::Custom(msg))
+        match table {
+            Ok(t) => Ok(t),
+            Err(error) => Err(error)
         }
+    }
+
+    pub fn write(&self, tbl: Table) {
+        // let manager = table_manager::get_table_manager(&self.path, tbl);
+        
+        // let lines = match manager {
+        //     table_manager::TableManagerVersion::V1(m) => m.read()
+        // };
     }
 
 }
