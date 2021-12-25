@@ -1,5 +1,3 @@
-use crate::table_manager::{TableManagerVersion, self};
-
 use super::line::Line;
 use super::field::Field;
 use super::db_error::DbError;
@@ -10,6 +8,14 @@ pub struct Table {
     pub lines: Vec<Line>
 }
 
+/**
+ * The Table object should allow to every operation on the Database.
+ * 
+ * It should allow to delete lines, update lines, delele fields (all in memory)
+ * It does not know about any file format.
+ * 
+ * To manage the undos, it should also manage a "dirty" field to know what was changed (maybe...)
+ */
 impl Table {
     pub fn new(name: &str, lines: Vec<Line>) -> Result<Table, DbError> {
         if let Some(id) = Table::check_for_duplicate_id(&lines) {

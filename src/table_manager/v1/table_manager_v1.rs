@@ -6,8 +6,9 @@ use crate::db::db_error::DbError;
 use crate::db::table::Table;
 use crate::util::file;
 use crate::db::line::Line;
-use super::v1::line_to_str::line_to_str;
-use super::v1::reader;
+
+use super::reader;
+use super::line_to_str::line_to_str;
 
 const TBL_EXT: &str = ".dt";
 const TBL_VERSION: &str = "#v1.0#";

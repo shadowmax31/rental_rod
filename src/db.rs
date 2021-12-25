@@ -14,6 +14,18 @@ pub struct Db {
     path: String
 }
 
+/**
+ * This is the PUBLIC interface to the Database.
+ *
+ * It allows to get tables by name, it creates the basic file and folder structure.
+ * 
+ * Any specific configuration of the Database should go here. For example, it is planned
+ * to have the option to use GIT to keep a "backup" of ealier stages of the Database. 
+ * This is where the calls should be made.
+ * 
+ * I think that managing the undos should also be done here. At this point, it's hard
+ * to be sure since the DB does not have enough feature yet.
+ */
 impl Db {
     pub fn new(path: &str) -> Result<Db, DbError> {
         if path == "" {
