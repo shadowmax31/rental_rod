@@ -9,7 +9,7 @@ pub struct Table {
 }
 
 /**
- * The Table object should allow to every operation on the Database.
+ * The Table object should allow to do every operation on the Database.
  * 
  * It should allow to delete lines, update lines, delele fields (all in memory)
  * It does not know about any file format.
