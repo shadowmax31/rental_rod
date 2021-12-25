@@ -9,8 +9,7 @@ use db::line::Field;
 use db::db_error::DbError;
 use std::process;
 
-//static PATH: &str = "/root/db";
-static PATH: &str = "/tmp/db";
+static PATH: &str = ".";
 
 fn main() {
     let db = Db::new(PATH).unwrap_or_else(|error| {
@@ -19,15 +18,19 @@ fn main() {
         process::exit(1)
     });
     
-    match db.table("btc") {
+    match db.table("test") {
         Err(err) => print_error("Error when reading the table", err),
-        _ => ()
+        Ok(table)  => {
+            for line in table.lines {
+                println!("{:?}", line);
+            }
+        }
     };
 
-    let line = new_test_line().unwrap();
-    db.insert("btc", &line).unwrap_or_else(|error| {
-        print_error("Error during the insert", error);
-    });
+    // let line = new_test_line().unwrap();
+    // db.insert("btc", &line).unwrap_or_else(|error| {
+    //     print_error("Error during the insert", error);
+    // });
 }
 
 fn print_error(details: &str, error: DbError) {

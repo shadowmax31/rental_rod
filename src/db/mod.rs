@@ -7,6 +7,8 @@ use db_error::DbError;
 
 use crate::table_manager;
 
+use table::Table;
+
 pub struct Db {
     path: String
 }
@@ -43,7 +45,7 @@ impl Db {
         Ok(())
     }
 
-    pub fn table(&self, tbl: &str) -> Result<Vec<line::Line>, DbError> {
+    pub fn table(&self, tbl: &str) -> Result<Table, DbError> {
         let manager = table_manager::get_table_manager(&self.path, tbl);
         
         let lines = match manager {
@@ -51,7 +53,7 @@ impl Db {
         };
 
         match lines {
-            Ok(lines) => Ok(lines),
+            Ok(lines) => Ok(Table::new(tbl, lines)),
             Err(msg) => Err(DbError::Custom(msg))
         }
     }

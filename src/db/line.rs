@@ -1,10 +1,12 @@
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct Line {
     pub id: Uuid,
     pub fields: Vec<Field>
 }
 
+#[derive(Debug)]
 pub struct Field {
     pub name: String,
     pub value: String
