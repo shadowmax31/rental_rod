@@ -85,13 +85,13 @@ impl TableManagerV1 {
 #[test]
 fn test_delete() {
     let tbl = "test_delete";
-    let m = TableManagerV1::new("/tmp/db/", tbl);
+    let m = TableManagerV1::new("/tmp/", tbl);
     _insert(&m);
     _insert(&m);
     _insert(&m);
     assert_eq!(_count_lines(&m.tbl_path), 4);
 
-    let m = TableManagerV1::new("/tmp/db/", tbl);
+    let m = TableManagerV1::new("/tmp/", tbl);
     assert_eq!(_count_lines(&m.tbl_path), 4);
     m.delete_all().unwrap();
     assert_eq!(_count_lines(&m.tbl_path), 0);
@@ -101,7 +101,7 @@ fn test_delete() {
     _insert(&m);
     assert_eq!(_count_lines(&m.tbl_path), 4);
 
-    let m = TableManagerV1::new("/tmp/db/", tbl);
+    let m = TableManagerV1::new("/tmp/", tbl);
     _insert(&m);
     _insert(&m);
     assert_eq!(_count_lines(&m.tbl_path), 6);
@@ -113,7 +113,7 @@ fn test_delete() {
 
 #[test]
 fn test_insert() {
-    let m = TableManagerV1::new("/tmp/db/", "test_insert");
+    let m = TableManagerV1::new("/tmp/", "test_insert");
     m.delete_all().unwrap();
 
     _insert(&m);
@@ -126,7 +126,7 @@ fn test_insert() {
 
 #[test]
 fn test_read() {
-   let m = TableManagerV1::new("/tmp/db", "test_read");
+   let m = TableManagerV1::new("/tmp", "test_read");
 
    _insert(&m);
    _insert(&m);
