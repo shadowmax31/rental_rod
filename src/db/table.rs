@@ -39,6 +39,19 @@ impl Table {
         found
     }
 
+    pub fn find(&self, name: &str, value: &str) -> Vec<&Line> {
+        let mut list: Vec<&Line> = Vec::new();
+
+        for line in &self.lines {
+            if let Some(found) = line.get(name) {
+                if value == found {
+                    list.push(&line);
+                }
+            }
+        }
+
+        list
+    }
 
     pub fn find_by_id(&self, id: Uuid) -> Option<&Line> {
         let mut found: Option<&Line> = None;
@@ -108,6 +121,24 @@ fn test_should_not_allow_identical_id() {
 
 }
 
+#[test]
+fn test_find() {
+    let table = _init_basic_table();
+
+    let list = table.find("firstname", "Simon");
+    assert_eq!(list.len(), 2);
+    assert_eq!(list[0].id.to_string(), "a60cbdfa-4c46-438c-8ad8-45bdd2063a56");
+    assert_eq!(list[1].id.to_string(), "49295823-29c2-1dba-2d14-ad498654ecc2");
+
+
+    let list = table.find("favorite_number", "1245");
+    assert_eq!(list.len(), 1);
+    assert_eq!(list[0].id.to_string(), "84e4eedf-a383-457e-aa73-d26c646762ba");
+
+    let list = table.find("a_field", "some value");
+    assert_eq!(list.len(), 0);
+}
+
 
 fn _init_basic_table() -> Table {
     let mut lines: Vec<Line> = Vec::new();
@@ -122,6 +153,10 @@ fn _init_basic_table() -> Table {
 
     let fields = vec![ Field::new("firstname", "Simon"), Field::new("lastname", "Neat"), Field::new("favorite_number", "540") ];
     let line = Line::new_with_id(Uuid::parse_str("a60cbdfa-4c46-438c-8ad8-45bdd2063a56").unwrap(), fields);
+    lines.push(line);
+
+    let fields = vec![ Field::new("firstname", "Simon"), Field::new("lastname", "Neat"), Field::new("favorite_number", "540") ];
+    let line = Line::new_with_id(Uuid::parse_str("49295823-29c2-1dba-2d14-ad498654ecc2").unwrap(), fields);
     lines.push(line);
 
     let fields = vec![ Field::new("firstname", "Paul"), Field::new("lastname", "Silly"), Field::new("favorite_number", "12") ];
