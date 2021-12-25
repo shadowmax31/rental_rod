@@ -1,6 +1,7 @@
 use crate::table_manager::{TableManagerVersion, self};
 
 use super::line::{Line, Field};
+use super::db_error::DbError;
 use uuid::Uuid;
 
 pub struct Table {
@@ -9,11 +10,33 @@ pub struct Table {
 }
 
 impl Table {
-    pub fn new(name: &str, lines: Vec<Line>) -> Table {
-        Table { 
+    pub fn new(name: &str, lines: Vec<Line>) -> Result<Table, DbError> {
+        if let Some(id) = Table::check_for_duplicate_id(&lines) {
+            let msg = String::from("The id [") + &id.to_string() + "] is used multiple times";
+            return Err(DbError::Custom(msg));
+        }
+
+        Ok (Table { 
             name: String::from(name), 
             lines: lines 
+        })
+    }
+
+    fn check_for_duplicate_id(lines: &Vec<Line>) -> Option<&Uuid> {
+        let mut found = None;
+
+        let mut checked: Vec<&Uuid> = Vec::new();
+        for line in lines {
+            if !checked.contains(&&line.id) {
+                checked.push(&line.id);
+            }
+            else {
+                found = Some(&line.id);
+                break;
+            }
         }
+
+        found
     }
 
 
@@ -48,6 +71,43 @@ fn test_find_by_id() {
     assert_eq!("a60cbdfa-4c46-438c-8ad8-45bdd2063a56", line.id.to_string());
 }
 
+#[test]
+fn test_should_not_allow_identical_id() {
+
+    // Using the same object
+    let mut lines: Vec<Line> = Vec::new();
+    let id = Uuid::new_v4();
+
+    let fields = vec![ Field::new("firstname", "Mike"), Field::new("lastname", "Johnson"), Field::new("favorite_number", "1245") ];
+    let line = Line::new_with_id(id, fields);
+    lines.push(line);
+
+    let fields = vec![ Field::new("firstname", "Sean"), Field::new("lastname", "Smith"), Field::new("favorite_number", "256") ];
+    let line = Line::new_with_id(id, fields);
+    lines.push(line);
+
+    let table = Table::new("test", lines);
+    assert_eq!(table.is_err(), true);
+
+
+    // Using different references of the same Uuid
+    let id1 = Uuid::parse_str("187de314-404d-439b-8a68-58122ea12261").unwrap();
+    let id2 = Uuid::parse_str("187de314-404d-439b-8a68-58122ea12261").unwrap();
+    let mut lines: Vec<Line> = Vec::new();
+
+    let fields = vec![ Field::new("firstname", "Mike"), Field::new("lastname", "Johnson"), Field::new("favorite_number", "1245") ];
+    let line = Line::new_with_id(id1, fields);
+    lines.push(line);
+
+    let fields = vec![ Field::new("firstname", "Sean"), Field::new("lastname", "Smith"), Field::new("favorite_number", "256") ];
+    let line = Line::new_with_id(id2, fields);
+    lines.push(line);
+
+    let table = Table::new("test", lines);
+    assert_eq!(table.is_err(), true);
+
+}
+
 
 fn _init_basic_table() -> Table {
     let mut lines: Vec<Line> = Vec::new();
@@ -72,5 +132,5 @@ fn _init_basic_table() -> Table {
     let line = Line::new_with_id(Uuid::parse_str("9f77958d-378a-4aab-9763-c815cd74f2bd").unwrap(), fields);
     lines.push(line);
 
-    Table::new("test", lines)
+    Table::new("test", lines).unwrap()
 }

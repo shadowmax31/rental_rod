@@ -53,7 +53,7 @@ impl Db {
         };
 
         match lines {
-            Ok(lines) => Ok(Table::new(tbl, lines)),
+            Ok(lines) => Ok(Table::new(tbl, lines)?),
             Err(msg) => Err(DbError::Custom(msg))
         }
     }
