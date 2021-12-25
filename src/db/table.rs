@@ -1,6 +1,7 @@
 use crate::table_manager::{TableManagerVersion, self};
 
-use super::line::{Line, Field};
+use super::line::Line;
+use super::field::Field;
 use super::db_error::DbError;
 use uuid::Uuid;
 

@@ -4,7 +4,7 @@ mod util;
 
 use db::Db;
 use db::line::Line;
-use db::line::Field;
+use db::field::Field;
 
 use db::db_error::DbError;
 use uuid::Uuid;

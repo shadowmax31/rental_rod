@@ -139,7 +139,7 @@ fn test_read() {
 }
 
 fn _insert(m: &TableManagerV1) {
-    let fields = vec![ crate::db::line::Field::new("Col1", "123") ];
+    let fields = vec![ crate::db::field::Field::new("Col1", "123") ];
     let line = Line::new(fields);
 
     assert_eq!(m.insert(&line).unwrap(), ());

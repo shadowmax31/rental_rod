@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use super::lexer::Lexer;
 use crate::db::line::Line;
-use crate::db::line::Field;
+use crate::db::field::Field;
 
 pub struct Parser {
     version: String,

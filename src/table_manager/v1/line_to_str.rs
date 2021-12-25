@@ -1,4 +1,5 @@
-use crate::db::line::{ Line, Field };
+use crate::db::line::Line;
+use crate::db::field::Field;
 
 /// Converts a Line to a string with the V1 format
 /// ```

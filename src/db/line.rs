@@ -1,26 +1,12 @@
 use uuid::Uuid;
 
 use crate::util::file;
+use super::field::Field;
 
 #[derive(Debug)]
 pub struct Line {
     pub id: Uuid,
     pub fields: Vec<Field>
-}
-
-#[derive(Debug)]
-pub struct Field {
-    pub name: String,
-    pub value: String
-}
-
-impl Field {
-    pub fn new(name: &str, value: &str) -> Field {
-        Field { 
-            name: String::from(name), 
-            value: String::from(value) 
-        }
-    }
 }
 
 impl Line {

@@ -1,5 +1,6 @@
 pub mod db_error;
 pub mod line;
+pub mod field;
 pub mod table;
 
 use std::io;
