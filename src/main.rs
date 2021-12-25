@@ -7,6 +7,7 @@ use db::line::Line;
 use db::line::Field;
 
 use db::db_error::DbError;
+use uuid::Uuid;
 use std::process;
 
 static PATH: &str = ".";
@@ -37,15 +38,15 @@ fn print_error(details: &str, error: DbError) {
     eprintln!("{}: {}", details, error);
 }
 
-fn new_test_line() -> Option<Line> {
+fn new_test_line() -> Line {
     let mut fields: Vec<Field> = Vec::new();
-    let mut field = Field::new("col1", "123");
+    let field = Field::new("col1", "123");
     fields.push(field);
 
-    field = Field::new("col2", "456");
+    let field = Field::new("col2", "456");
     fields.push(field);
 
-    field = Field::new("col3", "789");
+    let field = Field::new("col3", "789");
     fields.push(field);
 
     Line::new(fields)
