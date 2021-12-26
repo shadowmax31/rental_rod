@@ -1,11 +1,13 @@
+use std::io::BufRead;
+
 use super::line::Line;
 use super::field::Field;
 use super::db_error::DbError;
 use uuid::Uuid;
 
 pub struct Table {
-    pub name: String,
-    pub lines: Vec<Line>
+    name: String,
+    lines: Vec<Line>
 }
 
 /**
@@ -46,17 +48,30 @@ impl Table {
         found
     }
 
+    pub fn get_lines(&self) -> Vec<&Line> {
+        self.find_where(|_| true)
+    }
+
     pub fn find(&self, name: &str, value: &str) -> Vec<&Line> {
+        self.find_where(|line| {
+            let field = line.get(name);
+            match field {
+                Some(f) => f.get() == value,
+                None => false
+            }
+        })
+    }
+
+    pub fn find_where<F>(&self, filter: F) -> Vec<&Line>
+        where F: Fn(&Line) -> bool {
         let mut list: Vec<&Line> = Vec::new();
 
         for line in &self.lines {
-            if let Some(found) = line.get(name) {
-                if value == found.get() {
-                    list.push(&line);
-                }
+            if filter(line) {
+                list.push(line);
             }
         }
-
+        
         list
     }
 
@@ -149,6 +164,30 @@ fn test_find() {
 
     let list = table.find("a_field", "some value");
     assert_eq!(list.len(), 0);
+}
+
+#[test]
+fn test_find_where() {
+    let table = _init_basic_table();
+
+    let lines = table.find_where(|line| {
+        if let Some(field) = line.get("lastname") {
+            return field.get().starts_with("S");
+        }
+
+        false
+    });
+
+    assert_eq!(lines.len(), 2);
+    assert_eq!(lines[0].get_id().to_string(), String::from("187de314-404d-439b-8a68-58122ea12261"));
+    assert_eq!(lines[1].get_id().to_string(), String::from("e4ee24eb-f84c-46ed-b8af-16e7891792e1"));
+
+
+    let lines = table.find_where(|_| false);
+    assert_eq!(lines.len(), 0);
+
+    let lines = table.find_where(|_| true);
+    assert_eq!(lines.len(), table.lines.len());
 }
 
 

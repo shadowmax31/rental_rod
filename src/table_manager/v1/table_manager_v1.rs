@@ -53,7 +53,7 @@ impl TableManagerV1 {
     }
 
     pub fn write(&self, tbl: &Table) -> Result<(), DbError> {
-        let lines = TableManagerV1::convert_to_str(&tbl.lines);
+        let lines = TableManagerV1::convert_to_str(&tbl.get_lines());
         file::write(&self.tbl_path, TBL_VERSION, &lines)?;
 
         Ok(())
@@ -70,7 +70,7 @@ impl TableManagerV1 {
         Table::new(&self.tbl_name, lines)
     }
 
-    fn convert_to_str(lines: &Vec<Line>) -> Vec<String> {
+    fn convert_to_str(lines: &Vec<&Line>) -> Vec<String> {
         let mut str_lines: Vec<String> = Vec::new();
         for line in lines {
             str_lines.push(line_to_str(&line));
@@ -135,7 +135,7 @@ fn test_read() {
    _insert(&m);
 
    let table = m.read().unwrap();
-   assert_eq!(table.lines.len(), 3);
+   assert_eq!(table.get_lines().len(), 3);
 
    m.drop().unwrap();
 }

@@ -24,7 +24,7 @@ fn main() {
     match db.table("test") {
         Err(err) => print_error("Error when reading the table", err),
         Ok(table)  => {
-            for line in table.lines {
+            for line in table.get_lines() {
                 println!("{:?}", line);
             }
         }
