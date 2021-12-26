@@ -20,7 +20,10 @@ impl Parser {
 
     pub fn init(&mut self, lexer: &mut Lexer) -> Result<(), DbError> {
         lexer.consume_and_check("#")?;
-        self.version = String::from(lexer.consume_err_if_none()?);
+
+        lexer.consume_and_check("v1.0")?;
+        self.version = String::from("v1.0");
+
         lexer.consume_and_check("#")?;
 
         loop {
@@ -31,7 +34,7 @@ impl Parser {
                         self.lines.push(Self::parse_line(lexer)?);
                     }
                     else {
-                        let msg = String::from("Unexpected token!");
+                        let msg = String::from("Unexpected token! [") + c + "]";
                         return Err(DbError::Custom(msg));
                     }
                 }
@@ -89,10 +92,10 @@ impl Parser {
         lexer.consume_and_check("\"")?;
 
         loop {
-            if let Some(peek) = lexer.peek() {
-                if peek == "\"" {
-                    if let Some(peek) = lexer.peek_at(1) {
-                        if peek == "\"" {
+            match lexer.peek() {
+                Some(peek) => {
+                    if peek == "\"" {
+                        if Parser::is_escaped_quote(lexer) {
                             lexer.consume();
                             lexer.consume();
                             value.push_str("\"");
@@ -102,14 +105,31 @@ impl Parser {
                             break;
                         }
                     }
-                }
-                else {
-                    value.push_str(lexer.consume_err_if_none()?);
+                    else {
+                        value.push_str(lexer.consume_err_if_none()?);
+                    }
+                },
+                None => {
+                    let msg =String::from("Could not find the end of the value [") + &value + "]"; 
+                    return Err(DbError::Custom(msg));
                 }
             }
         }
 
         Ok(value)
+    }
+
+    fn is_escaped_quote(lexer: &mut Lexer) -> bool {
+        let mut escaped = false;
+        if let Some(peek) = lexer.peek() {
+            if let Some(peek_at) = lexer.peek_at(1) {
+                if peek == "\"" && peek_at == "\"" {
+                    escaped = true;
+                }
+            }
+        }
+
+        escaped
     }
 
 }
@@ -130,9 +150,11 @@ impl std::fmt::Debug for Parser {
 
 #[test]
 fn test_parser() {
-    let to_parser = "#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]";
+    let to_parser = String::from("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"]") +
+                                            "[_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]" +
+                                            "[_id:\"7810da2f-84c7-4897-a0e1-8d92ecefadb4\" name:\"Brackets in a value []\" full:\"\"]";
 
-    let mut l = Lexer::new(to_parser);
+    let mut l = Lexer::new(&to_parser);
     let p = Parser::new(&mut l).unwrap();
     let lines = p.lines;
 
@@ -148,4 +170,51 @@ fn test_parser() {
     assert_eq!(lines[1].get_fields()[1].get(), "Mike Mike");
     assert_eq!(lines[1].get_fields()[2].get_name(), "col3");
     assert_eq!(lines[1].get_fields()[2].get(), "Using \" in a text");
+
+    assert_eq!(lines[2].get_fields()[0].get(), "Brackets in a value []");
+}
+
+#[test]
+fn test_invalid_format() {
+    // Missing version
+    let parser = _get_parser_from_str("##[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]");
+    assert_eq!(parser.is_err(), true);
+
+    // Missing first [
+    let parser = _get_parser_from_str("#v1.0#_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]");
+    assert_eq!(parser.is_err(), true);
+
+    // Missing last ]
+    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\"");
+    assert_eq!(parser.is_err(), true);
+
+    // Missing first " (on id)
+    let parser = _get_parser_from_str("#v1.0#[_id:5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\"]");
+    assert_eq!(parser.is_err(), true);
+
+    // Missing first " (on field)
+    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:123\"]");
+    assert_eq!(parser.is_err(), true);
+
+    // Missing last " (on id)
+    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25 col1:\"123\"]");
+    assert_eq!(parser.is_err(), true);
+
+    // Missing last " (on field)
+    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123]");
+    assert_eq!(parser.is_err(), true);
+
+    // Missing :
+    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1 \"123\" col2:\"456\" col3:\"789\"][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]");
+    assert_eq!(parser.is_err(), true);
+
+    // Using ; instead of :
+    let parser = _get_parser_from_str("#v1.0#[_id;\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\" full:\"Mike Mike\" col3:\"Using \"\" in a text\"]");
+    assert_eq!(parser.is_err(), true);
+}
+
+fn _get_parser_from_str(to_parse: &str) -> Result<Parser, DbError> {
+    let mut l = Lexer::new(to_parse);
+
+    Parser::new(&mut l)
 }
