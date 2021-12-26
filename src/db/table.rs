@@ -1,5 +1,3 @@
-use std::io::BufRead;
-
 use super::line::Line;
 use super::field::Field;
 use super::db_error::DbError;
@@ -56,7 +54,7 @@ impl Table {
         self.find_where(|line| {
             let field = line.get(name);
             match field {
-                Some(f) => f.get() == value,
+                Some(f) => f.get().to_string() == value,
                 None => false
             }
         })
@@ -118,11 +116,11 @@ fn test_should_not_allow_identical_id() {
     let mut lines: Vec<Line> = Vec::new();
     let id = Uuid::new_v4();
 
-    let fields = vec![ Field::new("firstname", "Mike"), Field::new("lastname", "Johnson"), Field::new("favorite_number", "1245") ];
+    let fields = vec![ Field::new_str("firstname", "Mike"), Field::new_str("lastname", "Johnson"), Field::new_str("favorite_number", "1245") ];
     let line = Line::new_with_id(id, fields);
     lines.push(line);
 
-    let fields = vec![ Field::new("firstname", "Sean"), Field::new("lastname", "Smith"), Field::new("favorite_number", "256") ];
+    let fields = vec![ Field::new_str("firstname", "Sean"), Field::new_str("lastname", "Smith"), Field::new_str("favorite_number", "256") ];
     let line = Line::new_with_id(id, fields);
     lines.push(line);
 
@@ -135,11 +133,11 @@ fn test_should_not_allow_identical_id() {
     let id2 = Uuid::parse_str("187de314-404d-439b-8a68-58122ea12261").unwrap();
     let mut lines: Vec<Line> = Vec::new();
 
-    let fields = vec![ Field::new("firstname", "Mike"), Field::new("lastname", "Johnson"), Field::new("favorite_number", "1245") ];
+    let fields = vec![ Field::new_str("firstname", "Mike"), Field::new_str("lastname", "Johnson"), Field::new_str("favorite_number", "1245") ];
     let line = Line::new_with_id(id1, fields);
     lines.push(line);
 
-    let fields = vec![ Field::new("firstname", "Sean"), Field::new("lastname", "Smith"), Field::new("favorite_number", "256") ];
+    let fields = vec![ Field::new_str("firstname", "Sean"), Field::new_str("lastname", "Smith"), Field::new_str("favorite_number", "256") ];
     let line = Line::new_with_id(id2, fields);
     lines.push(line);
 
@@ -172,7 +170,7 @@ fn test_find_where() {
 
     let lines = table.find_where(|line| {
         if let Some(field) = line.get("lastname") {
-            return field.get().starts_with("S");
+            return field.get().to_string().starts_with("S");
         }
 
         false
@@ -194,27 +192,27 @@ fn test_find_where() {
 fn _init_basic_table() -> Table {
     let mut table = Table::new("test", vec![]).unwrap();
 
-    let fields = vec![ Field::new("firstname", "Mike"), Field::new("lastname", "Johnson"), Field::new("favorite_number", "1245") ];
+    let fields = vec![ Field::new_str("firstname", "Mike"), Field::new_str("lastname", "Johnson"), Field::new_str("favorite_number", "1245") ];
     let line = Line::new_with_id(Uuid::parse_str("84e4eedf-a383-457e-aa73-d26c646762ba").unwrap(), fields);
     table.insert(line);
 
-    let fields = vec![ Field::new("firstname", "Sean"), Field::new("lastname", "Smith"), Field::new("favorite_number", "256") ];
+    let fields = vec![ Field::new_str("firstname", "Sean"), Field::new_str("lastname", "Smith"), Field::new_str("favorite_number", "256") ];
     let line = Line::new_with_id(Uuid::parse_str("187de314-404d-439b-8a68-58122ea12261").unwrap(), fields);
     table.insert(line);
 
-    let fields = vec![ Field::new("firstname", "Simon"), Field::new("lastname", "Neat"), Field::new("favorite_number", "540") ];
+    let fields = vec![ Field::new_str("firstname", "Simon"), Field::new_str("lastname", "Neat"), Field::new_str("favorite_number", "540") ];
     let line = Line::new_with_id(Uuid::parse_str("a60cbdfa-4c46-438c-8ad8-45bdd2063a56").unwrap(), fields);
     table.insert(line);
 
-    let fields = vec![ Field::new("firstname", "Simon"), Field::new("lastname", "Neat"), Field::new("favorite_number", "540") ];
+    let fields = vec![ Field::new_str("firstname", "Simon"), Field::new_str("lastname", "Neat"), Field::new_str("favorite_number", "540") ];
     let line = Line::new_with_id(Uuid::parse_str("49295823-29c2-1dba-2d14-ad498654ecc2").unwrap(), fields);
     table.insert(line);
 
-    let fields = vec![ Field::new("firstname", "Paul"), Field::new("lastname", "Silly"), Field::new("favorite_number", "12") ];
+    let fields = vec![ Field::new_str("firstname", "Paul"), Field::new_str("lastname", "Silly"), Field::new_str("favorite_number", "12") ];
     let line = Line::new_with_id(Uuid::parse_str("e4ee24eb-f84c-46ed-b8af-16e7891792e1").unwrap(), fields);
     table.insert(line);
 
-    let fields = vec![ Field::new("firstname", "Bob"), Field::new("lastname", "Bob"), Field::new("favorite_number", "760") ];
+    let fields = vec![ Field::new_str("firstname", "Bob"), Field::new_str("lastname", "Bob"), Field::new_str("favorite_number", "760") ];
     let line = Line::new_with_id(Uuid::parse_str("9f77958d-378a-4aab-9763-c815cd74f2bd").unwrap(), fields);
     table.insert(line);
 

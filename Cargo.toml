@@ -8,3 +8,5 @@ edition = "2021"
 
 [dependencies]
 uuid = { version = "0.8", features = ["v4"] }
+rust_decimal = "1.19"
+rust_decimal_macros = "1.19"

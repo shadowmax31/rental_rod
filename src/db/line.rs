@@ -2,6 +2,7 @@ use uuid::Uuid;
 
 use super::field::Field;
 use super::db_error::DbError;
+use super::field_type::Type;
 
 #[derive(Debug)]
 pub struct Line {
@@ -32,7 +33,7 @@ impl Line {
             return Err(DbError::Custom(String::from("The field [") + field_name + "] already exists"));
         }
 
-        let f = Field::new(field_name, value);
+        let f = Field::new_str(field_name, value);
         self.fields.push(f);
 
         Ok(())
@@ -68,7 +69,7 @@ impl Line {
     pub fn set(&mut self, field_name: &str, value: &str) {
         for field in &mut self.fields {
             if field.get_name() == field_name {
-                field.set(value);
+                field.set(Type::from_str(value));
                 break;
             }
         }
@@ -89,9 +90,9 @@ impl Line {
 fn test_get() {
     let line = _init_line();
 
-    assert_eq!(line.get("firstname").unwrap().get(), "Mike");
-    assert_eq!(line.get("favorite_number").unwrap().get(), "1245");
-    assert_eq!(line.get("lastname").unwrap().get(), "Johnson");
+    assert_eq!(line.get("firstname").unwrap().get().to_string(), "Mike");
+    assert_eq!(line.get("favorite_number").unwrap().get().to_string(), "1245");
+    assert_eq!(line.get("lastname").unwrap().get().to_string(), "Johnson");
 
     assert_eq!(line.get("other_name").is_none(), true);
     assert_eq!(line.get("").is_none(), true);
