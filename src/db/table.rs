@@ -34,11 +34,11 @@ impl Table {
 
         let mut checked: Vec<&Uuid> = Vec::new();
         for line in lines {
-            if !checked.contains(&&line.id) {
-                checked.push(&line.id);
+            if !checked.contains(&line.get_id()) {
+                checked.push(line.get_id());
             }
             else {
-                found = Some(&line.id);
+                found = Some(line.get_id());
                 break;
             }
         }
@@ -51,7 +51,7 @@ impl Table {
 
         for line in &self.lines {
             if let Some(found) = line.get(name) {
-                if value == found {
+                if value == found.get() {
                     list.push(&line);
                 }
             }
@@ -63,7 +63,7 @@ impl Table {
     pub fn find_by_id(&self, id: Uuid) -> Option<&Line> {
         let mut found: Option<&Line> = None;
         for line in &self.lines {
-            if line.id == id {
+            if line.get_id() == &id {
                 found = Some(line);
                 break;
             }
@@ -88,12 +88,12 @@ fn test_find_by_id() {
     let line = tbl.find_by_id(Uuid::parse_str("84e4eedf-a383-457e-aa73-d26c646762ba").unwrap());
     assert_eq!(line.is_some(), true);
     let line = line.unwrap();
-    assert_eq!("84e4eedf-a383-457e-aa73-d26c646762ba", line.id.to_string());
+    assert_eq!("84e4eedf-a383-457e-aa73-d26c646762ba", line.get_id().to_string());
 
     let line = tbl.find_by_id(Uuid::parse_str("a60cbdfa-4c46-438c-8ad8-45bdd2063a56").unwrap());
     assert_eq!(line.is_some(), true);
     let line = line.unwrap();
-    assert_eq!("a60cbdfa-4c46-438c-8ad8-45bdd2063a56", line.id.to_string());
+    assert_eq!("a60cbdfa-4c46-438c-8ad8-45bdd2063a56", line.get_id().to_string());
 }
 
 #[test]
@@ -139,13 +139,13 @@ fn test_find() {
 
     let list = table.find("firstname", "Simon");
     assert_eq!(list.len(), 2);
-    assert_eq!(list[0].id.to_string(), "a60cbdfa-4c46-438c-8ad8-45bdd2063a56");
-    assert_eq!(list[1].id.to_string(), "49295823-29c2-1dba-2d14-ad498654ecc2");
+    assert_eq!(list[0].get_id().to_string(), "a60cbdfa-4c46-438c-8ad8-45bdd2063a56");
+    assert_eq!(list[1].get_id().to_string(), "49295823-29c2-1dba-2d14-ad498654ecc2");
 
 
     let list = table.find("favorite_number", "1245");
     assert_eq!(list.len(), 1);
-    assert_eq!(list[0].id.to_string(), "84e4eedf-a383-457e-aa73-d26c646762ba");
+    assert_eq!(list[0].get_id().to_string(), "84e4eedf-a383-457e-aa73-d26c646762ba");
 
     let list = table.find("a_field", "some value");
     assert_eq!(list.len(), 0);
@@ -153,31 +153,31 @@ fn test_find() {
 
 
 fn _init_basic_table() -> Table {
-    let mut lines: Vec<Line> = Vec::new();
+    let mut table = Table::new("test", vec![]).unwrap();
 
     let fields = vec![ Field::new("firstname", "Mike"), Field::new("lastname", "Johnson"), Field::new("favorite_number", "1245") ];
     let line = Line::new_with_id(Uuid::parse_str("84e4eedf-a383-457e-aa73-d26c646762ba").unwrap(), fields);
-    lines.push(line);
+    table.insert(line);
 
     let fields = vec![ Field::new("firstname", "Sean"), Field::new("lastname", "Smith"), Field::new("favorite_number", "256") ];
     let line = Line::new_with_id(Uuid::parse_str("187de314-404d-439b-8a68-58122ea12261").unwrap(), fields);
-    lines.push(line);
+    table.insert(line);
 
     let fields = vec![ Field::new("firstname", "Simon"), Field::new("lastname", "Neat"), Field::new("favorite_number", "540") ];
     let line = Line::new_with_id(Uuid::parse_str("a60cbdfa-4c46-438c-8ad8-45bdd2063a56").unwrap(), fields);
-    lines.push(line);
+    table.insert(line);
 
     let fields = vec![ Field::new("firstname", "Simon"), Field::new("lastname", "Neat"), Field::new("favorite_number", "540") ];
     let line = Line::new_with_id(Uuid::parse_str("49295823-29c2-1dba-2d14-ad498654ecc2").unwrap(), fields);
-    lines.push(line);
+    table.insert(line);
 
     let fields = vec![ Field::new("firstname", "Paul"), Field::new("lastname", "Silly"), Field::new("favorite_number", "12") ];
     let line = Line::new_with_id(Uuid::parse_str("e4ee24eb-f84c-46ed-b8af-16e7891792e1").unwrap(), fields);
-    lines.push(line);
+    table.insert(line);
 
     let fields = vec![ Field::new("firstname", "Bob"), Field::new("lastname", "Bob"), Field::new("favorite_number", "760") ];
     let line = Line::new_with_id(Uuid::parse_str("9f77958d-378a-4aab-9763-c815cd74f2bd").unwrap(), fields);
-    lines.push(line);
+    table.insert(line);
 
-    Table::new("test", lines).unwrap()
+    table
 }

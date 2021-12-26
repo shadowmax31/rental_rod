@@ -64,10 +64,7 @@ impl Parser {
 
             let val = Self::loop_for_value(lexer)?;
 
-            fields.push(Field {
-                name: String::from(col),
-                value: String::from(val)
-            });
+            fields.push(Field::new(&col, &val));
 
             lexer.consume_if(" ");
         }
@@ -76,7 +73,7 @@ impl Parser {
 
         lexer.consume_and_check("]")?;
 
-        Ok(Line { id, fields })
+        Ok(Line::new_with_id(id, fields))
     }
 
     fn loop_for_value(lexer: &mut Lexer) -> Result<String, DbError> {
@@ -112,9 +109,9 @@ impl std::fmt::Debug for Parser {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         println!("Debug - Parser");
         for line in &self.lines {
-            println!("ID: {}", line.id);
-            for f in &line.fields {
-                println!("{}: {}", f.name, f.value);
+            println!("ID: {}", line.get_id());
+            for f in line.get_fields() {
+                println!("{}: {}", f.get_name(), f.get());
             }
         }
 
@@ -132,14 +129,14 @@ fn test_parser() {
 
     assert_eq!(p.version, "v1.0");
 
-    assert_eq!(lines[0].id, Uuid::parse_str("5435c914-a918-4cc7-8354-e55ff04d9e25").unwrap());
-    assert_eq!(lines[0].fields[0].name, "col1");
-    assert_eq!(lines[0].fields[0].value, "123");
-    assert_eq!(lines[0].fields[2].value, "789");
+    assert_eq!(lines[0].get_id(), &Uuid::parse_str("5435c914-a918-4cc7-8354-e55ff04d9e25").unwrap());
+    assert_eq!(lines[0].get_fields()[0].get_name(), "col1");
+    assert_eq!(lines[0].get_fields()[0].get(), "123");
+    assert_eq!(lines[0].get_fields()[2].get(), "789");
 
-    assert_eq!(lines[1].fields[0].name, "name");
-    assert_eq!(lines[1].fields[0].value, "client");
-    assert_eq!(lines[1].fields[1].value, "Mike Mike");
-    assert_eq!(lines[1].fields[2].name, "col3");
-    assert_eq!(lines[1].fields[2].value, "Using \" in a text");
+    assert_eq!(lines[1].get_fields()[0].get_name(), "name");
+    assert_eq!(lines[1].get_fields()[0].get(), "client");
+    assert_eq!(lines[1].get_fields()[1].get(), "Mike Mike");
+    assert_eq!(lines[1].get_fields()[2].get_name(), "col3");
+    assert_eq!(lines[1].get_fields()[2].get(), "Using \" in a text");
 }

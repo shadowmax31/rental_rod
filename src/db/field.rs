@@ -1,7 +1,9 @@
+use std::fs::File;
+
 #[derive(Debug)]
 pub struct Field {
-    pub name: String,
-    pub value: String
+    name: String,
+    value: String
 }
 
 impl Field {
@@ -11,4 +13,17 @@ impl Field {
             value: String::from(value) 
         }
     }
+
+    pub fn set(&mut self, value: &str) {
+        self.value = String::from(value);
+    }
+
+    pub fn get(&self) -> &str {
+        &self.value
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
 }

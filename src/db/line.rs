@@ -1,12 +1,11 @@
 use uuid::Uuid;
 
-use crate::util::file;
 use super::field::Field;
 
 #[derive(Debug)]
 pub struct Line {
-    pub id: Uuid,
-    pub fields: Vec<Field>
+    id: Uuid,
+    fields: Vec<Field>
 }
 
 impl Line {
@@ -18,11 +17,19 @@ impl Line {
         Line { id, fields }
     }
 
-    pub fn get(&self, field_name: &str) -> Option<&str> {
-        let mut found: Option<&str> = None;
+    pub fn get_id(&self) -> &Uuid {
+        &self.id
+    }
+
+    pub fn get_fields(&self) -> &Vec<Field> {
+        &self.fields
+    }
+
+    pub fn get(&self, field_name: &str) -> Option<&Field> {
+        let mut found: Option<&Field> = None;
         for field in &self.fields {
-            if field.name == field_name {
-                found = Some(&field.value);
+            if field.get_name() == field_name {
+                found = Some(field);
                 break;
             }
         }
@@ -30,10 +37,19 @@ impl Line {
         found
     }
 
+    pub fn set(&mut self, field_name: &str, value: &str) {
+        for field in &mut self.fields {
+            if field.get_name() == field_name {
+                field.set(value);
+                break;
+            }
+        }
+    }
+
     pub fn get_fields_name(&self) -> Vec<&str> {
         let mut fields: Vec<&str> = Vec::new();
         for f in &self.fields {
-            fields.push(&f.name);
+            fields.push(&f.get_name());
         }
 
         fields
@@ -45,9 +61,9 @@ impl Line {
 fn test_get() {
     let line = _init_line();
 
-    assert_eq!(line.get("firstname").unwrap(), "Mike");
-    assert_eq!(line.get("favorite_number").unwrap(), "1245");
-    assert_eq!(line.get("lastname").unwrap(), "Johnson");
+    assert_eq!(line.get("firstname").unwrap().get(), "Mike");
+    assert_eq!(line.get("favorite_number").unwrap().get(), "1245");
+    assert_eq!(line.get("lastname").unwrap().get(), "Johnson");
 
     assert_eq!(line.get("other_name").is_none(), true);
     assert_eq!(line.get("").is_none(), true);
