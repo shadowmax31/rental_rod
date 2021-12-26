@@ -20,7 +20,7 @@ impl Parser {
 
     pub fn init(&mut self, lexer: &mut Lexer) -> Result<(), DbError> {
         lexer.consume_and_check("#")?;
-        self.version = lexer.consume().unwrap().to_owned();
+        self.version = String::from(lexer.consume_err_if_none()?);
         lexer.consume_and_check("#")?;
 
         loop {
@@ -47,19 +47,24 @@ impl Parser {
         lexer.consume_and_check("_id")?;
         lexer.consume_and_check(":")?;
         lexer.consume_and_check("\"")?;
-        let id = String::from(lexer.consume().unwrap());
+        let id = String::from(lexer.consume_err_if_none()?);
         lexer.consume_and_check("\"")?;
         lexer.consume_if(" ");
 
         let mut fields: Vec<Field> = vec![];
         loop {
             let peek = lexer.peek();
-            if peek.is_none() || peek.unwrap() == "]" {
+            let should_break = match peek {
+                Some(p) => p == "]",
+                None => true
+            };
+
+            if should_break {
                 break;
             }
              
 
-            let col = String::from(lexer.consume().unwrap()); // Col
+            let col = String::from(lexer.consume_err_if_none()?); 
             lexer.consume_and_check(":")?;
 
             let val = Self::loop_for_value(lexer)?;
@@ -69,7 +74,10 @@ impl Parser {
             lexer.consume_if(" ");
         }
 
-        let id = Uuid::parse_str(&id).unwrap();
+        let id = match Uuid::parse_str(&id) {
+            Ok(id) => id,
+            Err(error) => return Err(DbError::Custom(error.to_string()))
+        };
 
         lexer.consume_and_check("]")?;
 
@@ -81,22 +89,23 @@ impl Parser {
         lexer.consume_and_check("\"")?;
 
         loop {
-            let peek = lexer.peek().unwrap();
-
-            if peek == "\"" {
-                let peek = lexer.peek_at(1).unwrap();
+            if let Some(peek) = lexer.peek() {
                 if peek == "\"" {
-                    lexer.consume();
-                    lexer.consume();
-                    value.push_str("\"");
+                    if let Some(peek) = lexer.peek_at(1) {
+                        if peek == "\"" {
+                            lexer.consume();
+                            lexer.consume();
+                            value.push_str("\"");
+                        }
+                        else {
+                            lexer.consume_and_check("\"")?;
+                            break;
+                        }
+                    }
                 }
                 else {
-                    lexer.consume_and_check("\"")?;
-                    break;
+                    value.push_str(lexer.consume_err_if_none()?);
                 }
-            }
-            else {
-                value.push_str(lexer.consume().unwrap());
             }
         }
 

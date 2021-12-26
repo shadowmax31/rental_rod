@@ -23,10 +23,10 @@ impl TableManagerV1 {
         let with_ext = tbl.to_owned() + TBL_EXT;
 
         let fullpath = std::path::Path::new(&base_path).join(with_ext); 
-        let fullpath = fullpath.to_str().unwrap_or("");
-        if fullpath == "" {
-            panic!("The path to the table is empty");
-        }
+        let fullpath = match fullpath.to_str() {
+            Some(p) => p,
+            None => return Err(DbError::Custom(String::from("The path to the table is empty")))
+        };
 
         let m = TableManagerV1 {
             tbl_path: String::from(fullpath),

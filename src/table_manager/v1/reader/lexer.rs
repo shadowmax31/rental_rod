@@ -1,3 +1,5 @@
+use std::io::BufRead;
+
 use crate::db::db_error::DbError;
 
 pub struct Lexer<'a> {
@@ -52,6 +54,13 @@ impl<'a> Lexer<'a> {
         Self::inc_index(&mut self.index);
 
         s
+    }
+
+    pub fn consume_err_if_none(&mut self) -> Result<&str, DbError> {
+        match self.consume() {
+            Some(c) => Ok(c),
+            None => Err(DbError::Custom(String::from("Expected to receive a value, but received None")))
+        }
     }
 
     pub fn consume_if(&mut self, val_is: &str) {
@@ -126,6 +135,17 @@ fn test_peek_peek_at() {
     assert_eq!(lexer.peek_at(3).unwrap(), "[");
     assert_eq!(lexer.peek_at(4).unwrap(), "_id");
     assert_eq!(lexer.peek_at(6).unwrap(), "\"");
+}
+
+#[test]
+fn test_consume_err_if_none() {
+    let s = "#v1.0#";
+    let mut lexer = Lexer::new(s);
+
+    assert_eq!(lexer.consume_err_if_none().unwrap(), "#");
+    assert_eq!(lexer.consume_err_if_none().unwrap(), "v1.0");
+    assert_eq!(lexer.consume_err_if_none().unwrap(), "#");
+    assert_eq!(lexer.consume_err_if_none().is_err(), true);
 }
 
 #[test]
