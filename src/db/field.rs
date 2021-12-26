@@ -11,25 +11,23 @@ pub struct Field {
 }
 
 impl Field {
-    pub fn new_str(name: &str, value: &str) -> Field {
-        Field { 
+    pub fn new(name: &str, value: Type) -> Field {
+        Field {
             name: String::from(name), 
-            value: Type::from_str(value)
+            value: value
         }
+    }
+
+    pub fn new_str(name: &str, value: &str) -> Field {
+        Field::new(name, Type::from_str(value))
     }
 
     pub fn new_int(name: &str, value: i64) -> Field {
-        Field {
-            name: String::from(name),
-            value: Type::from_int(value)
-        }
+        Field::new(name, Type::from_int(value))
     }
 
     pub fn new_decimal(name: &str, value: Decimal) -> Field {
-        Field {
-            name: String::from(name),
-            value: Type::from_decimal(value)
-        }
+        Field::new(name, Type::from_decimal(value))
     }
 
     pub fn set(&mut self, value: Type) {

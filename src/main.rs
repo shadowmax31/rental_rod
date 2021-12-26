@@ -3,6 +3,7 @@ mod table_manager;
 mod util;
 
 use db::Db;
+use db::field_type::Type;
 use db::line::Line;
 use db::field::Field;
 
@@ -23,23 +24,17 @@ fn main() {
     
     match db.table("test") {
         Err(err) => print_error("Error when reading the table", err),
-        Ok(table)  => {
-            for line in table.get_lines() {
-                println!("{:?}", line);
+        Ok(mut table)  => {
+            // if let Ok(line) = new_test_line() {
+                // table.insert(line);
+            // }
+            table.print();
+
+            if let Err(error) = db.write(&mut table) {
+                print_error("Error when writing the table", error);
             }
         }
     };
-
-    // let line = new_test_line();
-    // match line {
-    //     Ok(line) => {
-    //         match db.table("btc") {
-    //             Ok(mut table) => table.insert(line),
-    //             Err(error) => print_error("Error during the insert", error)
-    //         };
-    //     },
-    //     Err(error) => print_error("Error during the line creation", error)
-    // };
 }
 
 fn print_error(details: &str, error: DbError) {
@@ -49,9 +44,9 @@ fn print_error(details: &str, error: DbError) {
 fn new_test_line() -> Result<Line, DbError> {
     let mut line = Line::new();
 
-    line.add("col1", "123")?;
-    line.add("col2", "456")?;
-    line.add("col3", "789")?;
+    line.add("col1", Type::from_str("123"))?;
+    line.add("col2", Type::from_str("456"))?;
+    line.add("col3", Type::from_str("789"))?;
 
     Ok(line)
 }

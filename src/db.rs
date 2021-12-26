@@ -58,12 +58,14 @@ impl Db {
         }
     }
 
-    pub fn write(&self, tbl: Table) {
-        // let manager = table_manager::get_table_manager(&self.path, tbl);
+    pub fn write(&self, table: &mut Table) -> Result<(), DbError> {
+        let manager = table_manager::get_table_manager(&self.path, table.get_name())?;
         
-        // let lines = match manager {
-        //     table_manager::TableManagerVersion::V1(m) => m.read()
-        // };
+        match manager {
+            table_manager::TableManagerVersion::V1(mut m) => m.write(table)?
+        };
+
+        Ok(())
     }
 
 }

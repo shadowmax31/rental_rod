@@ -27,13 +27,13 @@ impl Line {
         &self.fields
     }
 
-    pub fn add(&mut self, field_name: &str, value: &str) -> Result<(), DbError> {
+    pub fn add(&mut self, field_name: &str, value: Type) -> Result<(), DbError> {
         let fields = self.get_fields_name();
         if fields.contains(&field_name) {
             return Err(DbError::Custom(String::from("The field [") + field_name + "] already exists"));
         }
 
-        let f = Field::new_str(field_name, value);
+        let f = Field::new(field_name, value);
         self.fields.push(f);
 
         Ok(())
@@ -58,21 +58,12 @@ impl Line {
         None
     }
 
-    pub fn get(&self, field_name: &str) -> Option<&Field> {
+    pub fn get(&mut self, field_name: &str) -> Option<&mut Field> {
         if let Some(i) = self.get_index(field_name) {
-            return Some(&self.fields[i]);
+            return Some(&mut self.fields[i]);
         }
 
         None
-    }
-
-    pub fn set(&mut self, field_name: &str, value: &str) {
-        for field in &mut self.fields {
-            if field.get_name() == field_name {
-                field.set(Type::from_str(value));
-                break;
-            }
-        }
     }
 
     pub fn get_fields_name(&self) -> Vec<&str> {
@@ -88,7 +79,7 @@ impl Line {
 
 #[test]
 fn test_get() {
-    let line = _init_line();
+    let mut line = _init_line();
 
     assert_eq!(line.get("firstname").unwrap().get().to_string(), "Mike");
     assert_eq!(line.get("favorite_number").unwrap().get().to_string(), "1245");
@@ -97,7 +88,7 @@ fn test_get() {
     assert_eq!(line.get("other_name").is_none(), true);
     assert_eq!(line.get("").is_none(), true);
     
-    let empty_line = Line::new();
+    let mut empty_line = Line::new();
     assert_eq!(empty_line.get("firstname").is_none(), true);
 }
 
@@ -149,9 +140,9 @@ fn test_get_field() {
 
 fn _init_line() -> Line {
     let mut line = Line::new();
-    line.add("firstname", "Mike").unwrap();
-    line.add("lastname", "Johnson").unwrap();
-    line.add("favorite_number", "1245").unwrap();
+    line.add("firstname", Type::from_str("Mike")).unwrap();
+    line.add("lastname", Type::from_str("Johnson")).unwrap();
+    line.add("favorite_number", Type::from_str("1245")).unwrap();
 
     line
 }

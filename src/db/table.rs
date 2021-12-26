@@ -46,11 +46,15 @@ impl Table {
         found
     }
 
-    pub fn get_lines(&self) -> Vec<&Line> {
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn get_lines(&mut self) -> Vec<&mut Line> {
         self.find_where(|_| true)
     }
 
-    pub fn find(&self, name: &str, value: &str) -> Vec<&Line> {
+    pub fn find(&mut self, name: &str, value: &str) -> Vec<&mut Line> {
         self.find_where(|line| {
             let field = line.get(name);
             match field {
@@ -60,11 +64,11 @@ impl Table {
         })
     }
 
-    pub fn find_where<F>(&self, filter: F) -> Vec<&Line>
-        where F: Fn(&Line) -> bool {
-        let mut list: Vec<&Line> = Vec::new();
+    pub fn find_where<F>(&mut self, filter: F) -> Vec<&mut Line>
+        where F: Fn(&mut Line) -> bool {
+        let mut list: Vec<&mut Line> = Vec::new();
 
-        for line in &self.lines {
+        for line in &mut self.lines {
             if filter(line) {
                 list.push(line);
             }
@@ -73,9 +77,9 @@ impl Table {
         list
     }
 
-    pub fn find_by_id(&self, id: Uuid) -> Option<&Line> {
-        let mut found: Option<&Line> = None;
-        for line in &self.lines {
+    pub fn find_by_id(&mut self, id: Uuid) -> Option<&mut Line> {
+        let mut found: Option<&mut Line> = None;
+        for line in &mut self.lines {
             if line.get_id() == &id {
                 found = Some(line);
                 break;
@@ -89,11 +93,17 @@ impl Table {
         self.lines.push(line);
     }
 
+    pub fn print(&self) {
+        for line in &self.lines {
+            println!("{:?}", line);
+        }
+    }
+
 }
 
 #[test]
 fn test_find_by_id() {
-    let tbl = _init_basic_table();
+    let mut tbl = _init_basic_table();
     let line = tbl.find_by_id(Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     
     assert_eq!(line.is_none(), true);
@@ -148,7 +158,7 @@ fn test_should_not_allow_identical_id() {
 
 #[test]
 fn test_find() {
-    let table = _init_basic_table();
+    let mut table = _init_basic_table();
 
     let list = table.find("firstname", "Simon");
     assert_eq!(list.len(), 2);
@@ -166,7 +176,7 @@ fn test_find() {
 
 #[test]
 fn test_find_where() {
-    let table = _init_basic_table();
+    let mut table = _init_basic_table();
 
     let lines = table.find_where(|line| {
         if let Some(field) = line.get("lastname") {

@@ -96,8 +96,8 @@ impl Parser {
         let type_name = lexer.consume_err_if_none()?;
         let field = match type_name {
             "string" => Field::new_str(name, value),
-            "integer" => Field::new_str(name, value),
-            "decimal" => Field::new_str(name, value),
+            "integer" => Field::new_int(name, Parser::str_to_int(value)?),
+            "decimal" => Field::new_decimal(name, Parser::str_to_decimal(value)?),
             _ => {
                 let msg = String::from("The type [") + type_name + "] is not supported";
                 return Err(DbError::Custom(msg));
@@ -105,6 +105,20 @@ impl Parser {
         };
 
         Ok(field)
+    }
+
+    fn str_to_int(value: &str) -> Result<i64, DbError> {
+        match i64::from_str(value) {
+            Ok(i) => Ok(i),
+            Err(error) => Err(DbError::Custom(error.to_string()))
+        }
+    }
+
+    fn str_to_decimal(value: &str) -> Result<Decimal, DbError> {
+        match Decimal::from_str(value) {
+            Ok(i) => Ok(i),
+            Err(error) => Err(DbError::Custom(error.to_string()))
+        }
     }
 
     fn loop_for_value(lexer: &mut Lexer) -> Result<String, DbError> {

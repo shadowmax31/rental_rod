@@ -3,6 +3,7 @@ use std::io::{self, BufRead};
 use std::vec;
 
 use crate::db::db_error::DbError;
+use crate::db::field_type::Type;
 use crate::db::table::Table;
 use crate::util::file;
 use crate::db::line::Line;
@@ -52,7 +53,7 @@ impl TableManagerV1 {
         Ok(())
     }
 
-    pub fn write(&self, tbl: &Table) -> Result<(), DbError> {
+    pub fn write(&mut self, tbl: &mut Table) -> Result<(), DbError> {
         let lines = TableManagerV1::convert_to_str(&tbl.get_lines());
         file::write(&self.tbl_path, TBL_VERSION, &lines)?;
 
@@ -70,7 +71,7 @@ impl TableManagerV1 {
         Table::new(&self.tbl_name, lines)
     }
 
-    fn convert_to_str(lines: &Vec<&Line>) -> Vec<String> {
+    fn convert_to_str(lines: &Vec<&mut Line>) -> Vec<String> {
         let mut str_lines: Vec<String> = Vec::new();
         for line in lines {
             str_lines.push(line_to_str(&line));
@@ -83,27 +84,27 @@ impl TableManagerV1 {
 #[test]
 fn test_delete() {
     let tbl = "test_delete";
-    let m = TableManagerV1::new("/tmp/", tbl).unwrap();
+    let mut m = TableManagerV1::new("/tmp/", tbl).unwrap();
     m.drop().unwrap();
 
-    _insert(&m);
-    _insert(&m);
-    _insert(&m);
+    _insert(&mut m);
+    _insert(&mut m);
+    _insert(&mut m);
     assert_eq!(_count_lines(&m.tbl_path), 4);
 
-    let m = TableManagerV1::new("/tmp/", tbl).unwrap();
+    let mut m = TableManagerV1::new("/tmp/", tbl).unwrap();
     assert_eq!(_count_lines(&m.tbl_path), 4);
     m.drop().unwrap();
     assert_eq!(_count_lines(&m.tbl_path), 0);
 
-    _insert(&m);
-    _insert(&m);
-    _insert(&m);
+    _insert(&mut m);
+    _insert(&mut m);
+    _insert(&mut m);
     assert_eq!(_count_lines(&m.tbl_path), 4);
 
-    let m = TableManagerV1::new("/tmp/", tbl).unwrap();
-    _insert(&m);
-    _insert(&m);
+    let mut m = TableManagerV1::new("/tmp/", tbl).unwrap();
+    _insert(&mut m);
+    _insert(&mut m);
     assert_eq!(_count_lines(&m.tbl_path), 6);
 
     m.drop().unwrap();
@@ -113,13 +114,13 @@ fn test_delete() {
 
 #[test]
 fn test_insert() {
-    let m = TableManagerV1::new("/tmp/", "test_insert").unwrap();
+    let mut m = TableManagerV1::new("/tmp/", "test_insert").unwrap();
     m.drop().unwrap();
 
-    _insert(&m);
-    _insert(&m);
-    _insert(&m);
-    _insert(&m);
+    _insert(&mut m);
+    _insert(&mut m);
+    _insert(&mut m);
+    _insert(&mut m);
 
     assert_eq!(_count_lines(&m.tbl_path), 5);
 
@@ -128,26 +129,26 @@ fn test_insert() {
 
 #[test]
 fn test_read() {
-   let m = TableManagerV1::new("/tmp", "test_read").unwrap();
+   let mut m = TableManagerV1::new("/tmp", "test_read").unwrap();
 
-   _insert(&m);
-   _insert(&m);
-   _insert(&m);
+   _insert(&mut m);
+   _insert(&mut m);
+   _insert(&mut m);
 
-   let table = m.read().unwrap();
+   let mut table = m.read().unwrap();
    assert_eq!(table.get_lines().len(), 3);
 
    m.drop().unwrap();
 }
 
-fn _insert(m: &TableManagerV1) {
+fn _insert(m: &mut TableManagerV1) {
     let mut table = m.read().unwrap();
     let mut line = Line::new();
-    line.add("Col1", "123").unwrap();
+    line.add("Col1", Type::from_str("123")).unwrap();
 
     table.insert(line);
     
-    assert_eq!(m.write(&table).unwrap(), ());
+    assert_eq!(m.write(&mut table).unwrap(), ());
 }
 
 fn _count_lines(path: &str) -> usize {
