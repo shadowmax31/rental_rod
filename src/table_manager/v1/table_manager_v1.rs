@@ -142,8 +142,9 @@ fn test_read() {
 
 fn _insert(m: &TableManagerV1) {
     let mut table = m.read().unwrap();
-    let fields = vec![ crate::db::field::Field::new("Col1", "123") ];
-    let line = Line::new(fields);
+    let mut line = Line::new();
+    line.add("Col1", "123").unwrap();
+
     table.insert(line);
     
     assert_eq!(m.write(&table).unwrap(), ());

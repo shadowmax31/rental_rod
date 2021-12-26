@@ -39,15 +39,11 @@ fn print_error(details: &str, error: DbError) {
 }
 
 fn new_test_line() -> Line {
-    let mut fields: Vec<Field> = Vec::new();
-    let field = Field::new("col1", "123");
-    fields.push(field);
+    let mut line = Line::new();
 
-    let field = Field::new("col2", "456");
-    fields.push(field);
+    line.add("col1", "123");
+    line.add("col2", "456");
+    line.add("col3", "789");
 
-    let field = Field::new("col3", "789");
-    fields.push(field);
-
-    Line::new(fields)
+    line
 }

@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use super::field::Field;
+use super::db_error::DbError;
 
 #[derive(Debug)]
 pub struct Line {
@@ -9,8 +10,8 @@ pub struct Line {
 }
 
 impl Line {
-    pub fn new(fields: Vec<Field>) -> Line {
-        Line::new_with_id(Uuid::new_v4(), fields)
+    pub fn new() -> Line {
+        Line::new_with_id(Uuid::new_v4(), vec![])
     }
 
     pub fn new_with_id(id: Uuid, fields: Vec<Field>) -> Line {
@@ -25,16 +26,43 @@ impl Line {
         &self.fields
     }
 
-    pub fn get(&self, field_name: &str) -> Option<&Field> {
-        let mut found: Option<&Field> = None;
-        for field in &self.fields {
-            if field.get_name() == field_name {
-                found = Some(field);
-                break;
-            }
+    pub fn add(&mut self, field_name: &str, value: &str) -> Result<(), DbError> {
+        let fields = self.get_fields_name();
+        if fields.contains(&field_name) {
+            return Err(DbError::Custom(String::from("The field [") + field_name + "] already exists"));
         }
 
-        found
+        let f = Field::new(field_name, value);
+        self.fields.push(f);
+
+        Ok(())
+    }
+
+    pub fn remove(&mut self, field_name: &str) {
+        if let Some(i) = self.get_index(field_name) {
+            self.fields.remove(i);
+        }
+    }
+
+    pub fn get_index(&self, field_name: &str) -> Option<usize> {
+        let mut i: usize = 0;
+        for field in &self.fields {
+            if field.get_name() == field_name {
+                return Some(i);
+            }
+
+            i += 1;
+        }
+
+        None
+    }
+
+    pub fn get(&self, field_name: &str) -> Option<&Field> {
+        if let Some(i) = self.get_index(field_name) {
+            return Some(&self.fields[i]);
+        }
+
+        None
     }
 
     pub fn set(&mut self, field_name: &str, value: &str) {
@@ -68,8 +96,37 @@ fn test_get() {
     assert_eq!(line.get("other_name").is_none(), true);
     assert_eq!(line.get("").is_none(), true);
     
-    let empty_line = Line::new(vec![]);
+    let empty_line = Line::new();
     assert_eq!(empty_line.get("firstname").is_none(), true);
+}
+
+#[test]
+fn test_get_index() {
+    let line = _init_line();
+
+    assert_eq!(line.get_index("firstname").unwrap(), 0);
+    assert_eq!(line.get_index("favorite_number").unwrap(), 2);
+    assert_eq!(line.get_index("lastname").unwrap(), 1);
+
+    assert_eq!(line.get_index("does_not_exist").is_none(), true);
+}
+
+#[test]
+fn test_remove() {
+    let mut line = _init_line();
+
+    let index = line.get_index("favorite_number").unwrap();
+    assert_eq!(index, 2);
+    assert_eq!(line.get_fields().len(), 3);
+
+    line.remove("lastname");
+    assert_eq!(line.get_fields().len(), 2);
+
+    line.remove("does_not_exist");
+    assert_eq!(line.get_fields().len(), 2);
+
+    let index = line.get_index("favorite_number").unwrap();
+    assert_eq!(index, 1);
 }
 
 #[test]
@@ -85,12 +142,15 @@ fn test_get_field() {
     assert_eq!(line.get_fields_name().contains(&"other"), false);
 
 
-    let line = Line::new(vec![]);
+    let line = Line::new();
     assert_eq!(line.get_fields_name().len(), 0);
 }
 
 fn _init_line() -> Line {
-    let fields = vec![ Field::new("firstname", "Mike"), Field::new("lastname", "Johnson"), Field::new("favorite_number", "1245") ];
+    let mut line = Line::new();
+    line.add("firstname", "Mike").unwrap();
+    line.add("lastname", "Johnson").unwrap();
+    line.add("favorite_number", "1245").unwrap();
 
-    Line::new(fields)
+    line
 }
