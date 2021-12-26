@@ -51,20 +51,23 @@ impl Table {
     }
 
     pub fn get_lines(&mut self) -> Vec<&mut Line> {
-        self.find_where(|_| true)
+        self.find(|_| true)
     }
 
-    pub fn find(&mut self, name: &str, value: &str) -> Vec<&mut Line> {
-        self.find_where(|line| {
-            let field = line.get(name);
-            match field {
-                Some(f) => f.get().to_string() == value,
-                None => false
+    pub fn get_line_index(&self, id: &Uuid) -> Option<usize> {
+        let mut i: usize = 0;
+        for line in &self.lines {
+            if line.get_id() == id {
+                return Some(i);
             }
-        })
+
+            i += 1;
+        }
+
+        None
     }
 
-    pub fn find_where<F>(&mut self, filter: F) -> Vec<&mut Line>
+    pub fn find<F>(&mut self, filter: F) -> Vec<&mut Line>
         where F: Fn(&mut Line) -> bool {
         let mut list: Vec<&mut Line> = Vec::new();
 
@@ -77,10 +80,10 @@ impl Table {
         list
     }
 
-    pub fn find_by_id(&mut self, id: Uuid) -> Option<&mut Line> {
+    pub fn find_by_id(&mut self, id: &Uuid) -> Option<&mut Line> {
         let mut found: Option<&mut Line> = None;
         for line in &mut self.lines {
-            if line.get_id() == &id {
+            if &line.get_id() == &id {
                 found = Some(line);
                 break;
             }
@@ -93,6 +96,12 @@ impl Table {
         self.lines.push(line);
     }
 
+    pub fn delete(&mut self, id: &Uuid) {
+        if let Some(index) = self.get_line_index(id) {
+            self.lines.remove(index);
+        }
+    }
+
     pub fn print(&self) {
         for line in &self.lines {
             println!("{:?}", line);
@@ -102,18 +111,33 @@ impl Table {
 }
 
 #[test]
+fn test_delete_line() {
+    let mut tbl = _init_basic_table();
+    let count = tbl.get_lines().len();
+    tbl.delete(&Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+
+    assert_eq!(count, tbl.get_lines().len());
+
+    let found_id = Uuid::parse_str("84e4eedf-a383-457e-aa73-d26c646762ba").unwrap();
+    assert_eq!(tbl.find_by_id(&found_id).is_some(), true);
+    tbl.delete(&found_id);
+    assert_eq!(count - 1, tbl.get_lines().len());
+    assert_eq!(tbl.find_by_id(&found_id).is_none(), true);
+}
+
+#[test]
 fn test_find_by_id() {
     let mut tbl = _init_basic_table();
-    let line = tbl.find_by_id(Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let line = tbl.find_by_id(&Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     
     assert_eq!(line.is_none(), true);
 
-    let line = tbl.find_by_id(Uuid::parse_str("84e4eedf-a383-457e-aa73-d26c646762ba").unwrap());
+    let line = tbl.find_by_id(&Uuid::parse_str("84e4eedf-a383-457e-aa73-d26c646762ba").unwrap());
     assert_eq!(line.is_some(), true);
     let line = line.unwrap();
     assert_eq!("84e4eedf-a383-457e-aa73-d26c646762ba", line.get_id().to_string());
 
-    let line = tbl.find_by_id(Uuid::parse_str("a60cbdfa-4c46-438c-8ad8-45bdd2063a56").unwrap());
+    let line = tbl.find_by_id(&Uuid::parse_str("a60cbdfa-4c46-438c-8ad8-45bdd2063a56").unwrap());
     assert_eq!(line.is_some(), true);
     let line = line.unwrap();
     assert_eq!("a60cbdfa-4c46-438c-8ad8-45bdd2063a56", line.get_id().to_string());
@@ -160,17 +184,17 @@ fn test_should_not_allow_identical_id() {
 fn test_find() {
     let mut table = _init_basic_table();
 
-    let list = table.find("firstname", "Simon");
+    let list = table.find(|l| l.has_with("firstname", "Simon"));
     assert_eq!(list.len(), 2);
     assert_eq!(list[0].get_id().to_string(), "a60cbdfa-4c46-438c-8ad8-45bdd2063a56");
     assert_eq!(list[1].get_id().to_string(), "49295823-29c2-1dba-2d14-ad498654ecc2");
 
 
-    let list = table.find("favorite_number", "1245");
+    let list = table.find(|l| l.has_with("favorite_number", "1245"));
     assert_eq!(list.len(), 1);
     assert_eq!(list[0].get_id().to_string(), "84e4eedf-a383-457e-aa73-d26c646762ba");
 
-    let list = table.find("a_field", "some value");
+    let list = table.find(|l| l.has_with("a_field", "some value"));
     assert_eq!(list.len(), 0);
 }
 
@@ -178,7 +202,7 @@ fn test_find() {
 fn test_find_where() {
     let mut table = _init_basic_table();
 
-    let lines = table.find_where(|line| {
+    let lines = table.find(|line| {
         if let Some(field) = line.get("lastname") {
             return field.get().to_string().starts_with("S");
         }
@@ -191,10 +215,10 @@ fn test_find_where() {
     assert_eq!(lines[1].get_id().to_string(), String::from("e4ee24eb-f84c-46ed-b8af-16e7891792e1"));
 
 
-    let lines = table.find_where(|_| false);
+    let lines = table.find(|_| false);
     assert_eq!(lines.len(), 0);
 
-    let lines = table.find_where(|_| true);
+    let lines = table.find(|_| true);
     assert_eq!(lines.len(), table.lines.len());
 }
 

@@ -23,6 +23,14 @@ impl Line {
         &self.id
     }
 
+    pub fn has_with(&mut self, field_name: &str, with: &str) -> bool {
+        if let Some(f) = self.get(field_name) {
+            return f.get() == &Type::from_str(with);
+        }
+
+        false
+    }
+
     pub fn get_fields(&self) -> &Vec<Field> {
         &self.fields
     }
