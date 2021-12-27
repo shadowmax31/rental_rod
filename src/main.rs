@@ -11,7 +11,7 @@ use db::db_error::DbError;
 use uuid::Uuid;
 use std::process;
 
-static PATH: &str = ".";
+static PATH: &str = "./db";
 
 fn main() {
     let db = match Db::new(PATH) {
