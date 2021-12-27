@@ -4,10 +4,12 @@ use rust_decimal::{Decimal, prelude::FromPrimitive};
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub enum Type {
     String(String),
     Integer(i64),
-    Decimal(Decimal)
+    Decimal(Decimal),
+    Boolean(bool)
 }
 
 impl Type {
@@ -23,11 +25,16 @@ impl Type {
         Type::Decimal(dec)
     }
 
+    pub fn from_bool(boolean: bool) -> Type {
+        Type::Boolean(boolean)
+    }
+
     pub fn get_type(&self) -> String {
         match self {
             Type::String(_) => "string",
             Type::Integer(_) => "integer",
-            Type::Decimal(_) => "decimal"
+            Type::Decimal(_) => "decimal",
+            Type::Boolean(_) => "boolean"
         }.to_owned()
     }
 
@@ -35,29 +42,46 @@ impl Type {
         match self {
             Type::String(v) => v.to_owned(),
             Type::Integer(v) => v.to_string(),
-            Type::Decimal(v) => v.to_string()
+            Type::Decimal(v) => v.to_string(),
+            Type::Boolean(v) => v.to_string()
         }
     }
 }
 
 #[test]
 fn test_mix_and_match() {
-    let int = Type::from_int(1);
+    let int = Type::from_int(0);
     let str = Type::from_str("hello");
     let dec = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
-    let dec1 = Type::from_decimal(Decimal::from_i64(1).unwrap());
+    let dec1 = Type::from_decimal(Decimal::from_i64(0).unwrap());
+    let boolean = Type::from_bool(false);
 
     assert_ne!(int, str);
     assert_ne!(int, dec);
     assert_ne!(int, dec1);
+    assert_ne!(int, boolean);
 
     assert_ne!(str, int);
     assert_ne!(str, dec);
     assert_ne!(str, dec1);
+    assert_ne!(str, boolean);
 
     assert_ne!(dec, int);
     assert_ne!(dec, str);
     assert_ne!(dec, dec1);
+    assert_ne!(dec, boolean);
+}
+
+#[test]
+fn test_bool_eq() {
+    let b_true = Type::from_bool(true);
+    let b_true1 = Type::from_bool(true);
+
+    let b_false = Type::from_bool(false);
+
+    assert_eq!(b_true, b_true);
+    assert_eq!(b_true, b_true1);
+    assert_ne!(b_true, b_false);
 }
 
 #[test]

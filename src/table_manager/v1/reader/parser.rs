@@ -98,6 +98,7 @@ impl Parser {
             "string" => Field::new_str(name, value),
             "integer" => Field::new_int(name, Parser::str_to_int(value)?),
             "decimal" => Field::new_decimal(name, Parser::str_to_decimal(value)?),
+            "boolean" => Field::new_bool(name, Parser::str_to_bool(value)),
             _ => {
                 let msg = String::from("The type [") + type_name + "] is not supported";
                 return Err(DbError::Custom(msg));
@@ -112,6 +113,15 @@ impl Parser {
             Ok(i) => Ok(i),
             Err(error) => Err(DbError::Custom(error.to_string()))
         }
+    }
+
+    fn str_to_bool(value: &str) -> bool {
+        let mut b = false;
+        if value == "true" {
+            b = true;
+        }
+
+        b
     }
 
     fn str_to_decimal(value: &str) -> Result<Decimal, DbError> {

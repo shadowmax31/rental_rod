@@ -22,6 +22,8 @@ fn main() {
         }
     };
     
+    // db.set_use_git(true);
+
     match db.table("test") {
         Err(err) => print_error("Error when reading the table", err),
         Ok(mut table)  => {

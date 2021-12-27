@@ -30,6 +30,10 @@ impl Field {
         Field::new(name, Type::from_decimal(value))
     }
 
+    pub fn new_bool(name: &str, value: bool) -> Field {
+        Field::new(name, Type::from_bool(value))
+    }
+
     pub fn set(&mut self, value: Type) {
         self.value = value;
     }
