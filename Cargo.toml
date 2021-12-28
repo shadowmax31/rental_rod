@@ -1,6 +1,6 @@
 [package]
 name = "rental_rod"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Etienne Beaulieu <ety_95@protonmail.com>"]
 edition = "2021"
 license = "GPL-2.0"

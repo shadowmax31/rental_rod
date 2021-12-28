@@ -12,7 +12,6 @@ use crate::db::line::Line;
 use super::reader;
 use super::line_to_str::line_to_str;
 
-const TBL_EXT: &str = ".dt";
 const TBL_VERSION: &str = "#v1.0#";
 
 pub struct TableManagerV1 {
@@ -87,7 +86,7 @@ impl TableManagerV1 {
     }
 
     fn get_fullpath(base_path: &str, tbl: &str) -> Result<String, DbError> {
-        let with_ext = tbl.to_owned() + TBL_EXT;
+        let with_ext = tbl.to_owned();
         let fullpath = std::path::Path::new(base_path).join(with_ext); 
         let fullpath = match fullpath.to_str() {
             Some(p) => p,
@@ -110,7 +109,7 @@ impl TableManagerV1 {
 
 #[test]
 fn test_is_of_type() {
-    let tbl = "test_of_type_v1";
+    let tbl = "test_of_type_v1_tbl";
     let base_path = "/tmp";
     let fullpath = TableManagerV1::get_fullpath(base_path, tbl).unwrap();
 
@@ -138,7 +137,7 @@ fn test_is_of_type() {
 
 #[test]
 fn test_drop() {
-    let tbl = "test_delete";
+    let tbl = "test_delete_tbl";
     let mut m = TableManagerV1::new("/tmp/", tbl).unwrap();
     m.drop().unwrap();
 
@@ -169,7 +168,7 @@ fn test_drop() {
 
 #[test]
 fn test_insert() {
-    let mut m = TableManagerV1::new("/tmp/", "test_insert").unwrap();
+    let mut m = TableManagerV1::new("/tmp/", "test_insert_tbl").unwrap();
     m.drop().unwrap();
 
     _insert(&mut m);
@@ -184,7 +183,7 @@ fn test_insert() {
 
 #[test]
 fn test_read() {
-   let mut m = TableManagerV1::new("/tmp", "test_read").unwrap();
+   let mut m = TableManagerV1::new("/tmp", "test_read_tbl").unwrap();
 
    _insert(&mut m);
    _insert(&mut m);
