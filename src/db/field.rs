@@ -1,5 +1,3 @@
-use std::fs::File;
-
 use rust_decimal::Decimal;
 
 use super::field_type::Type;

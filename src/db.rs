@@ -1,10 +1,11 @@
 pub mod db_error;
 pub mod line;
 pub mod field;
+
 pub mod field_type;
+
 pub mod table;
 
-use std::io;
 use db_error::DbError;
 use uuid::Uuid;
 
@@ -12,7 +13,7 @@ use table::Table;
 
 use crate::table_manager;
 
-use self::{line::Line, field_type::Type, field::Field};
+use self::{line::Line, field_type::Type};
 
 pub struct Db {
     path: String,
@@ -200,7 +201,7 @@ impl Db {
         let manager = table_manager::get_table_manager(&self.path, tbl)?;
         
         match manager {
-            table_manager::TableManagerVersion::V1(mut m) => m.drop()?
+            table_manager::TableManagerVersion::V1(m) => m.drop()?
         };
 
         Ok(())

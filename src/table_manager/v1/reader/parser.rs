@@ -4,7 +4,6 @@ use uuid::Uuid;
 
 use super::lexer::Lexer;
 use crate::db::db_error::DbError;
-use crate::db::field_type::Type;
 use crate::db::line::Line;
 use crate::db::field::Field;
 
@@ -192,99 +191,108 @@ impl std::fmt::Debug for Parser {
     }
 }
 
-#[test]
-fn test_parser() {
-    let to_parser = String::from("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":integer col2:\"456\":integer col3:\"789.2333\":decimal]") +
-                                            "[_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\":string full:\"Mike Mike\":string col3:\"Using \"\" in a text\":string]" +
-                                            "[_id:\"7810da2f-84c7-4897-a0e1-8d92ecefadb4\" name:\"Brackets in a value []\":string full:\"\":string]";
 
-    let mut l = Lexer::new(&to_parser);
-    let p = Parser::new(&mut l).unwrap();
-    let lines = p.lines;
+#[cfg(test)]
+mod test {
+    use uuid::Uuid;
 
-    assert_eq!(p.version, "v1.0");
+    use crate::db::db_error::DbError;
+    use crate::table_manager::v1::reader::{lexer::Lexer, parser::Parser};
 
-    assert_eq!(lines[0].get_id(), &Uuid::parse_str("5435c914-a918-4cc7-8354-e55ff04d9e25").unwrap());
-    assert_eq!(lines[0].get_fields()[0].get_name(), "col1");
-    assert_eq!(lines[0].get_fields()[0].get().to_string(), "123");
-    assert_eq!(lines[0].get_fields()[2].get().to_string(), "789.2333");
-
-    assert_eq!(lines[1].get_fields()[0].get_name(), "name");
-    assert_eq!(lines[1].get_fields()[0].get().to_string(), "client");
-    assert_eq!(lines[1].get_fields()[1].get().to_string(), "Mike Mike");
-    assert_eq!(lines[1].get_fields()[2].get_name(), "col3");
-    assert_eq!(lines[1].get_fields()[2].get().to_string(), "Using \" in a text");
-
-    assert_eq!(lines[2].get_fields()[0].get().to_string(), "Brackets in a value []");
-}
-
-#[test]
-fn test_invalid_format() {
-    // Missing version
-    let parser = _get_parser_from_str("##[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":string col2:\"456\":string col3:\"789\":string]");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [v1.0], but received [#]");
-
-    // Missing first [
-    let parser = _get_parser_from_str("#v1.0#_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"]");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Unexpected token! [_id]");
-
-    // Missing last ]
-    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\"");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected []], but received []");
-
-    // Missing first " (on id)
-    let parser = _get_parser_from_str("#v1.0#[_id:5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\"]:string");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [\"], but received [5435c914-a918-4cc7-8354-e55ff04d9e25]");
-
-    // Missing first " (on field)
-    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:123\"]:string");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [\"], but received [123]");
-
-    // Missing last " (on id)
-    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25 col1:\"123\"]:string");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [\"], but received [ ]");
-
-    // Missing last " (on field)
-    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123]:string");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Could not find the end of the value [123]:]");
-
-    // Missing :
-    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1 \"123\":string col2:\"456\":string col3:\"789\":string][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\":string full:\"Mike Mike\":string col3:\"Using \"\" in a text\":string]");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [:], but received [ ]");
-
-    // Using ; instead of :
-    let parser = _get_parser_from_str("#v1.0#[_id;\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":string col2:\"456\":string col3:\"789\":string]");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [_id], but received [_id;]");
-
-    // Using : before type
-    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" string col2:\"456\":string col3:\"789\":string]");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [:], but received [ ]");
-
-    // Using unsupported type
-    let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":ssstringg col2:\"456\":string col3:\"789\":string]");
-    assert_eq!(parser.is_err(), true);
-    assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "The type [ssstringg] is not supported");
-}
-
-fn _get_parser_from_str(to_parse: &str) -> Result<Parser, DbError> {
-    let mut l = Lexer::new(to_parse);
-
-    Parser::new(&mut l)
-}
-
-fn _unwrap_custom_error(error: &DbError) -> String {
-    match error {
-        DbError::Custom(msg) => msg.to_owned(), 
-        _ => "".to_owned()
+    #[test]
+    fn test_parser() {
+        let to_parser = String::from("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":integer col2:\"456\":integer col3:\"789.2333\":decimal]") +
+                                                "[_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\":string full:\"Mike Mike\":string col3:\"Using \"\" in a text\":string]" +
+                                                "[_id:\"7810da2f-84c7-4897-a0e1-8d92ecefadb4\" name:\"Brackets in a value []\":string full:\"\":string]";
+    
+        let mut l = Lexer::new(&to_parser);
+        let p = Parser::new(&mut l).unwrap();
+        let lines = p.lines;
+    
+        assert_eq!(p.version, "v1.0");
+    
+        assert_eq!(lines[0].get_id(), &Uuid::parse_str("5435c914-a918-4cc7-8354-e55ff04d9e25").unwrap());
+        assert_eq!(lines[0].get_fields()[0].get_name(), "col1");
+        assert_eq!(lines[0].get_fields()[0].get().to_string(), "123");
+        assert_eq!(lines[0].get_fields()[2].get().to_string(), "789.2333");
+    
+        assert_eq!(lines[1].get_fields()[0].get_name(), "name");
+        assert_eq!(lines[1].get_fields()[0].get().to_string(), "client");
+        assert_eq!(lines[1].get_fields()[1].get().to_string(), "Mike Mike");
+        assert_eq!(lines[1].get_fields()[2].get_name(), "col3");
+        assert_eq!(lines[1].get_fields()[2].get().to_string(), "Using \" in a text");
+    
+        assert_eq!(lines[2].get_fields()[0].get().to_string(), "Brackets in a value []");
+    }
+    
+    #[test]
+    fn test_invalid_format() {
+        // Missing version
+        let parser = _get_parser_from_str("##[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":string col2:\"456\":string col3:\"789\":string]");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [v1.0], but received [#]");
+    
+        // Missing first [
+        let parser = _get_parser_from_str("#v1.0#_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" col2:\"456\" col3:\"789\"]");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Unexpected token! [_id]");
+    
+        // Missing last ]
+        let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\"");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected []], but received []");
+    
+        // Missing first " (on id)
+        let parser = _get_parser_from_str("#v1.0#[_id:5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\"]:string");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [\"], but received [5435c914-a918-4cc7-8354-e55ff04d9e25]");
+    
+        // Missing first " (on field)
+        let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:123\"]:string");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [\"], but received [123]");
+    
+        // Missing last " (on id)
+        let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25 col1:\"123\"]:string");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [\"], but received [ ]");
+    
+        // Missing last " (on field)
+        let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123]:string");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Could not find the end of the value [123]:]");
+    
+        // Missing :
+        let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1 \"123\":string col2:\"456\":string col3:\"789\":string][_id:\"3b3f4537-1b8b-4577-999f-e650ea76e190\" name:\"client\":string full:\"Mike Mike\":string col3:\"Using \"\" in a text\":string]");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [:], but received [ ]");
+    
+        // Using ; instead of :
+        let parser = _get_parser_from_str("#v1.0#[_id;\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":string col2:\"456\":string col3:\"789\":string]");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [_id], but received [_id;]");
+    
+        // Using : before type
+        let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\" string col2:\"456\":string col3:\"789\":string]");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "Expected [:], but received [ ]");
+    
+        // Using unsupported type
+        let parser = _get_parser_from_str("#v1.0#[_id:\"5435c914-a918-4cc7-8354-e55ff04d9e25\" col1:\"123\":ssstringg col2:\"456\":string col3:\"789\":string]");
+        assert_eq!(parser.is_err(), true);
+        assert_eq!(_unwrap_custom_error(&parser.unwrap_err()), "The type [ssstringg] is not supported");
+    }
+    
+    fn _get_parser_from_str(to_parse: &str) -> Result<Parser, DbError> {
+        let mut l = Lexer::new(to_parse);
+    
+        Parser::new(&mut l)
+    }
+    
+    fn _unwrap_custom_error(error: &DbError) -> String {
+        match error {
+            DbError::Custom(msg) => msg.to_owned(), 
+            _ => "".to_owned()
+        }
     }
 }

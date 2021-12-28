@@ -1,5 +1,3 @@
-use std::io::BufRead;
-
 use crate::db::db_error::DbError;
 
 pub struct Lexer<'a> {
@@ -37,6 +35,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    #[cfg(test)]
     pub fn count(&self) -> usize {
         self.tokens.len()
     }

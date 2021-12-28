@@ -1,6 +1,4 @@
-use std::str::FromStr;
-
-use rust_decimal::{Decimal, prelude::FromPrimitive};
+use rust_decimal::Decimal;
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -48,74 +46,82 @@ impl Type {
     }
 }
 
-#[test]
-fn test_mix_and_match() {
-    let int = Type::from_int(0);
-    let str = Type::from_str("hello");
-    let dec = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
-    let dec1 = Type::from_decimal(Decimal::from_i64(0).unwrap());
-    let boolean = Type::from_bool(false);
+#[cfg(test)]
+mod test {
+    use rust_decimal::{prelude::FromPrimitive, Decimal};
+    use std::str::FromStr;
 
-    assert_ne!(int, str);
-    assert_ne!(int, dec);
-    assert_ne!(int, dec1);
-    assert_ne!(int, boolean);
+    use crate::db::field_type::Type;
 
-    assert_ne!(str, int);
-    assert_ne!(str, dec);
-    assert_ne!(str, dec1);
-    assert_ne!(str, boolean);
+    #[test]
+    fn test_mix_and_match() {
+        let int = Type::from_int(0);
+        let str = Type::from_str("hello");
+        let dec = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
+        let dec1 = Type::from_decimal(Decimal::from_i64(0).unwrap());
+        let boolean = Type::from_bool(false);
 
-    assert_ne!(dec, int);
-    assert_ne!(dec, str);
-    assert_ne!(dec, dec1);
-    assert_ne!(dec, boolean);
-}
+        assert_ne!(int, str);
+        assert_ne!(int, dec);
+        assert_ne!(int, dec1);
+        assert_ne!(int, boolean);
 
-#[test]
-fn test_bool_eq() {
-    let b_true = Type::from_bool(true);
-    let b_true1 = Type::from_bool(true);
+        assert_ne!(str, int);
+        assert_ne!(str, dec);
+        assert_ne!(str, dec1);
+        assert_ne!(str, boolean);
 
-    let b_false = Type::from_bool(false);
+        assert_ne!(dec, int);
+        assert_ne!(dec, str);
+        assert_ne!(dec, dec1);
+        assert_ne!(dec, boolean);
+    }
 
-    assert_eq!(b_true, b_true);
-    assert_eq!(b_true, b_true1);
-    assert_ne!(b_true, b_false);
-}
+    #[test]
+    fn test_bool_eq() {
+        let b_true = Type::from_bool(true);
+        let b_true1 = Type::from_bool(true);
 
-#[test]
-fn test_int_eq() {
-    let int1 = Type::from_int(1);
-    let int1_1 = Type::from_int(1);
+        let b_false = Type::from_bool(false);
 
-    let int2 = Type::from_int(2);
+        assert_eq!(b_true, b_true);
+        assert_eq!(b_true, b_true1);
+        assert_ne!(b_true, b_false);
+    }
 
-    assert_eq!(int1, int1);
-    assert_eq!(int1, int1_1);
-    assert_ne!(int1, int2);
-}
+    #[test]
+    fn test_int_eq() {
+        let int1 = Type::from_int(1);
+        let int1_1 = Type::from_int(1);
 
-#[test]
-fn test_string_eq() {
-    let hello = Type::from_str("hello");
-    let hello_1 = Type::from_str("hello");
+        let int2 = Type::from_int(2);
 
-    let world = Type::from_str("world");
+        assert_eq!(int1, int1);
+        assert_eq!(int1, int1_1);
+        assert_ne!(int1, int2);
+    }
 
-    assert_eq!(hello, hello);
-    assert_eq!(hello, hello_1);
-    assert_ne!(hello, world);
-}
+    #[test]
+    fn test_string_eq() {
+        let hello = Type::from_str("hello");
+        let hello_1 = Type::from_str("hello");
 
-#[test]
-fn test_decimal_eq() {
-    let dec1 = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
-    let dec1_1 = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
+        let world = Type::from_str("world");
 
-    let dec2 = Type::from_decimal(Decimal::from_str("2.2222").unwrap());
+        assert_eq!(hello, hello);
+        assert_eq!(hello, hello_1);
+        assert_ne!(hello, world);
+    }
 
-    assert_eq!(dec1, dec1);
-    assert_eq!(dec1, dec1_1);
-    assert_ne!(dec1, dec2);
+    #[test]
+    fn test_decimal_eq() {
+        let dec1 = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
+        let dec1_1 = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
+
+        let dec2 = Type::from_decimal(Decimal::from_str("2.2222").unwrap());
+
+        assert_eq!(dec1, dec1);
+        assert_eq!(dec1, dec1_1);
+        assert_ne!(dec1, dec2);
+    }
 }
