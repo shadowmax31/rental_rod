@@ -4,15 +4,12 @@ use std::io::{BufReader, prelude::*};
 use std::path::Path;
 use std::io;
 
-pub enum FileError {
-    FileNotFound,
-    IoError(io::Error)
-}
+use crate::db::db_error::DbError;
 
-pub fn read(path: &str) -> Result<Vec<String>, FileError>  {
+pub fn read(path: &str) -> Result<Vec<String>, DbError>  {
     let file = match File::open(path) {
         Ok(v) => v,
-        Err(_) => return Err(FileError::FileNotFound)
+        Err(_) => return Err(DbError::Custom(String::from("File not found")))
     };
 
     let buf = BufReader::new(file);

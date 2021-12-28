@@ -7,35 +7,17 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rr'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=rr",
-                    "--package=rr"
-                ],
-                "filter": {
-                    "name": "rr",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'rr'",
+            "name": "Debug unit tests in library 'rr'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rr",
+                    "--lib",
                     "--package=rr"
                 ],
                 "filter": {
                     "name": "rr",
-                    "kind": "bin"
+                    "kind": "lib"
                 }
             },
             "args": [],
