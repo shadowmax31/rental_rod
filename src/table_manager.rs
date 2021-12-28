@@ -1,11 +1,8 @@
 
-use crate::db::db_error::DbError;
+use crate::db::{db_error::DbError, table::Table};
 use v1::table_manager_v1::TableManagerV1;
 
 mod v1;
-pub enum TableManagerVersion {
-    V1(TableManagerV1),
-}
 
 /**
  * The TableManger is used to convert the Table Object to a File and a File to a Table Object
@@ -20,6 +17,20 @@ pub enum TableManagerVersion {
  * 
  * If needed, it should also manage locks on the table file
  */
-pub fn get_table_manager(base_path: &str, tbl: &str) -> Result<TableManagerVersion, DbError> {
-    Ok(TableManagerVersion::V1(TableManagerV1::new(base_path, tbl)?))
+pub fn get_table_manager(base_path: &str, tbl: &str) -> Result<impl TableManager, DbError> {
+    if TableManagerV1::is_of_type(base_path, tbl) {
+        Ok(TableManagerV1::new(base_path, tbl)?)
+    }
+    else {
+        // Default version
+        Ok(TableManagerV1::new(base_path, tbl)?)
+    }
+}
+
+pub trait TableManager {
+    fn drop(&self) -> Result<(), DbError>;
+    fn create(&self) -> Result<(), std::io::Error>;
+    fn write(&mut self, tbl: &mut Table) -> Result<(), DbError>;
+    fn read(&self) -> Result<Table, DbError>;
+    fn is_of_type(base_path: &str, tbl: &str) -> bool;
 }

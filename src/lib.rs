@@ -5,12 +5,12 @@ mod util;
 
 #[cfg(test)]
 mod test {
-    use crate::db::{Db, line::Line, field_type::Type};
+    // use crate::db::{Db, line::Line, field_type::Type};
 
     #[test]
     fn test() {
-        let mut db = Db::new("/tmp/git_test").unwrap();
-        db.set_use_git(true).unwrap();
+        // let mut db = Db::new("/tmp/git_test").unwrap();
+        // db.set_use_git(true).unwrap();
 
         // let mut table = db.table("new table").unwrap();
         // let mut line = Line::new();

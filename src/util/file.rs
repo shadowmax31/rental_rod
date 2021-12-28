@@ -7,10 +7,7 @@ use std::io;
 use crate::db::db_error::DbError;
 
 pub fn read(path: &str) -> Result<Vec<String>, DbError>  {
-    let file = match File::open(path) {
-        Ok(v) => v,
-        Err(_) => return Err(DbError::Custom(String::from("File not found")))
-    };
+    let file = File::open(path)?;
 
     let buf = BufReader::new(file);
     Ok(buf.lines().map(|l| l.expect("Cannot parse line")).collect())

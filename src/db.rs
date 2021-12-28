@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use table::Table;
 
-use crate::table_manager;
+use crate::table_manager::{self, TableManager};
 
 use self::{line::Line, field_type::Type};
 
@@ -223,12 +223,8 @@ impl Db {
 
     pub fn table(&self, tbl: &str) -> Result<Table, DbError> {
         let manager = table_manager::get_table_manager(&self.path, tbl)?;
-        
-        let table = match manager {
-            table_manager::TableManagerVersion::V1(m) => m.read()
-        };
 
-        match table {
+        match manager.read() {
             Ok(t) => Ok(t),
             Err(error) => Err(error)
         }
@@ -251,10 +247,7 @@ impl Db {
 
     pub fn drop(&self, tbl: &str) -> Result<(), DbError> {
         let manager = table_manager::get_table_manager(&self.path, tbl)?;
-        
-        match manager {
-            table_manager::TableManagerVersion::V1(m) => m.drop()?
-        };
+        manager.drop()?;
 
         let msg = String::from("Dropping the table ") + "[" + tbl + "]";
         self.git_commit(&msg)?;
@@ -263,11 +256,8 @@ impl Db {
     }
 
     pub fn write(&self, table: &mut Table) -> Result<(), DbError> {
-        let manager = table_manager::get_table_manager(&self.path, table.get_name())?;
-        
-        match manager {
-            table_manager::TableManagerVersion::V1(mut m) => m.write(table)?
-        };
+        let mut manager = table_manager::get_table_manager(&self.path, table.get_name())?;
+        manager.write(table)?;
 
         let msg = String::from("Commiting changes to ") + "[" + table.get_name() + "]";
         self.git_commit(&msg)?;
@@ -314,6 +304,13 @@ fn test_table_creation() {
     db.table("test1").unwrap();
     db.table("test2").unwrap();
 
+    assert_eq!(db.tables().unwrap().len(), 0);
+
+    let mut table = db.table("test1").unwrap();
+    db.write(&mut table).unwrap();
+    let mut table = db.table("test2").unwrap();
+    db.write(&mut table).unwrap();
+
     assert_eq!(db.tables().unwrap().len(), 2);
 
     let db = _init_db(p, false);
@@ -330,8 +327,10 @@ fn test_drop_table() {
 
     assert_eq!(db.tables().unwrap().len(), 0);
 
-    db.table("test1").unwrap();
-    db.table("test2").unwrap();
+    let mut table = db.table("test1").unwrap();
+    db.write(&mut table).unwrap();
+    let mut table = db.table("test2").unwrap();
+    db.write(&mut table).unwrap();
 
     assert_eq!(db.tables().unwrap().len(), 2);
 
@@ -351,7 +350,7 @@ fn test_drop_table() {
 
 #[test]
 fn test_write() {
-    let p = "/tmp/test_drop";
+    let p = "/tmp/test_write";
     let db = _init_db(p, true);
 
     // Check that adding a line to the table in memory works
