@@ -67,8 +67,8 @@ impl Table {
         None
     }
 
-    pub fn find<F>(&mut self, filter: F) -> Vec<&mut Line>
-        where F: Fn(&mut Line) -> bool {
+    pub fn find<F>(&mut self, mut filter: F) -> Vec<&mut Line>
+        where F: FnMut(&mut Line) -> bool {
         let mut list: Vec<&mut Line> = Vec::new();
 
         for line in &mut self.lines {

@@ -1,3 +1,5 @@
+use chrono::DateTime;
+use chrono::Utc;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
 use uuid::Uuid;
@@ -98,6 +100,7 @@ impl Parser {
             "integer" => Field::new_int(name, Parser::str_to_int(value)?),
             "decimal" => Field::new_decimal(name, Parser::str_to_decimal(value)?),
             "boolean" => Field::new_bool(name, Parser::str_to_bool(value)),
+            "datetime" => Field::new_datetime(name, Parser::str_to_datetime(value)?),
             _ => {
                 let msg = String::from("The type [") + type_name + "] is not supported";
                 return Err(DbError::Custom(msg));
@@ -112,6 +115,15 @@ impl Parser {
             Ok(i) => Ok(i),
             Err(error) => Err(DbError::Custom(error.to_string()))
         }
+    }
+
+    fn str_to_datetime(value: &str) -> Result<DateTime<Utc>, DbError> {
+        let dt = match DateTime::from_str(value) {
+            Ok(v) => v,
+            Err(_) => return Err(DbError::Custom(String::from("Error parsing [") + value + "] into a DateTime"))
+        };
+
+        Ok(dt)
     }
 
     fn str_to_bool(value: &str) -> bool {
@@ -194,10 +206,33 @@ impl std::fmt::Debug for Parser {
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
+    use chrono::{NaiveDate, NaiveTime, DateTime, NaiveDateTime, Utc};
+    use rust_decimal::Decimal;
     use uuid::Uuid;
 
     use crate::db::db_error::DbError;
     use crate::table_manager::v1::reader::{lexer::Lexer, parser::Parser};
+
+    #[test]
+    fn test_loading_value() {
+        let bool = "false";
+        let dec = "23.112";
+        let int = "12";
+        let dt = "2021-12-28T17:11:14.000Z";
+
+        let date = NaiveDate::from_ymd(2021, 12, 28);
+        let time = NaiveTime::from_hms_nano(17, 11, 14, 492);
+        let dt_expect: DateTime<Utc> = DateTime::from_utc(NaiveDateTime::new(date, time), Utc);
+
+        assert_eq!(dt, dt_expect.to_rfc3339_opts(chrono::SecondsFormat::Millis, true));
+
+        assert_eq!(Parser::str_to_bool(bool), false);
+        assert_eq!(Parser::str_to_decimal(dec).unwrap(), Decimal::from_str("23.112").unwrap());
+        assert_eq!(Parser::str_to_int(int).unwrap(), 12);
+        assert_eq!(Parser::str_to_datetime(dt).unwrap().timestamp_millis(), dt_expect.timestamp_millis());
+    }
 
     #[test]
     fn test_parser() {

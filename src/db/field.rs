@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 
 use super::field_type::Type;
@@ -30,6 +31,10 @@ impl Field {
 
     pub fn new_bool(name: &str, value: bool) -> Field {
         Field::new(name, Type::from_bool(value))
+    }
+
+    pub fn new_datetime(name: &str, value: DateTime<Utc>) -> Field {
+        Field::new(name, Type::from_datetime(value))
     }
 
     pub fn set(&mut self, value: Type) {

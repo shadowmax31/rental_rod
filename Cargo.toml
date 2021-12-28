@@ -12,3 +12,4 @@ description = "This a flat file database"
 uuid = { version = "0.8", features = ["v4"] }
 rust_decimal = "1.19"
 rust_decimal_macros = "1.19"
+chrono = "0.4"
