@@ -30,7 +30,7 @@ pub fn get_table_manager(base_path: &str, tbl: &str) -> Result<impl TableManager
 pub trait TableManager {
     fn drop(&self) -> Result<(), DbError>;
     fn create(&self) -> Result<(), std::io::Error>;
-    fn write(&mut self, tbl: &mut Table) -> Result<(), DbError>;
+    fn write(&mut self, tbl: &mut Table) -> Result<bool, DbError>;
     fn read(&self) -> Result<Table, DbError>;
     fn is_of_type(base_path: &str, tbl: &str) -> bool;
 }

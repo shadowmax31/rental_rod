@@ -5,7 +5,7 @@ mod util;
 
 #[cfg(test)]
 mod test {
-    // use crate::db::{Db, line::Line, field_type::Type};
+    use crate::db::{Db, line::Line, field_type::Type};
 
     #[test]
     fn test() {
@@ -20,6 +20,9 @@ mod test {
         // table.insert(line);
 
         // db.write(&mut table).unwrap();
+
+        // table.insert(Line::new());
+        // db.write(&mut table);
 
         // db.drop("new table");
     }

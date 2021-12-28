@@ -36,11 +36,11 @@ impl TableManager for TableManagerV1 {
         Ok(())
     }
 
-    fn write(&mut self, tbl: &mut Table) -> Result<(), DbError> {
+    fn write(&mut self, tbl: &mut Table) -> Result<bool, DbError> {
         let lines = TableManagerV1::convert_to_str(&tbl.get_lines());
-        file::write(&self.tbl_path, TBL_VERSION, &lines)?;
+        let file_created = file::write(&self.tbl_path, TBL_VERSION, &lines)?;
 
-        Ok(())
+        Ok(file_created)
     }
 
     fn read(&self) -> Result<Table, DbError> {
@@ -203,7 +203,7 @@ fn _insert(m: &mut TableManagerV1) {
 
     table.insert(line);
     
-    assert_eq!(m.write(&mut table).unwrap(), ());
+    assert_eq!(m.write(&mut table).is_ok(), true);
 }
 
 fn _count_lines(path: &str) -> usize {

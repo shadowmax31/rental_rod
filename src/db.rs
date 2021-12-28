@@ -65,29 +65,32 @@ impl Db {
         
         self.init_default_config()?;
 
-        self.git_init()?;
-
         Ok(())
     }
 
     fn git_init(&self) -> Result<(), DbError> {
         if self.use_git {
-            match Command::new("git")
-                .arg("init")
-                .arg(&self.path)
-                .output() {
-                    Err(error) => return Err(DbError::Custom(error.to_string())),
-                    Ok(_) => ()
-                };
-
-            self.git_commit("Initial commit of the project")?;
+            if !self.git_exists() {
+                match Command::new("git")
+                    .arg("init")
+                    .arg(&self.path)
+                    .output() {
+                        Err(error) => return Err(DbError::Custom(error.to_string())),
+                        Ok(_) => ()
+                    };
+            }
         }
 
         Ok(())
     }
 
+    fn git_exists(&self) -> bool {
+        std::path::Path::new(&self.path).join(".git").exists()
+    }
+
     fn git_commit(&self, msg: &str) -> Result<(), DbError> {
         if self.use_git {
+            self.git_init()?;
             match Command::new("git")
                 .arg("-C")
                 .arg(&self.path)
@@ -211,9 +214,6 @@ impl Db {
         field.set(value);
 
         self.use_git = use_git;
-        if self.use_git {
-            self.git_init()?;
-        }
 
         // Write to the file
         self.write(&mut table)?;
@@ -249,7 +249,7 @@ impl Db {
         let manager = table_manager::get_table_manager(&self.path, tbl)?;
         manager.drop()?;
 
-        let msg = String::from("Dropping the table ") + "[" + tbl + "]";
+        let msg = String::from("Drop table ") + "[" + tbl + "]";
         self.git_commit(&msg)?;
 
         Ok(())
@@ -257,9 +257,15 @@ impl Db {
 
     pub fn write(&self, table: &mut Table) -> Result<(), DbError> {
         let mut manager = table_manager::get_table_manager(&self.path, table.get_name())?;
-        manager.write(table)?;
 
-        let msg = String::from("Commiting changes to ") + "[" + table.get_name() + "]";
+        let msg: String;
+        if manager.write(table)? {
+            msg = String::from("Create table ") + "[" + table.get_name() + "]";
+        }
+        else {
+            msg = String::from("Update table ") + "[" + table.get_name() + "]";
+        }
+
         self.git_commit(&msg)?;
         Ok(())
     }
@@ -267,8 +273,117 @@ impl Db {
 }
 
 #[test]
-fn test_config() {
-    let p = "/tmp/test_config";
+fn test_dont_use_git() {
+    let p = "/tmp/test_dont_use_git";
+    let db = _init_db(p, true);
+    assert_eq!(db.git_exists(), false);
+    assert_eq!(db.use_git, false);
+
+    let mut table = db.table("test").unwrap();
+    table.insert(Line::new());
+    db.write(&mut table).unwrap();
+
+    let log = _git_log(&db);
+    assert_eq!(db.git_exists(), false);
+    assert_eq!(log.len(), 0);
+
+    let db = _init_db(p, false);
+    assert_eq!(db.use_git, false);
+    let mut table = db.table("test").unwrap();
+
+    let log = _git_log(&db);
+    assert_eq!(db.git_exists(), false);
+    assert_eq!(log.len(), 0);
+
+    table.insert(Line::new());
+
+    let log = _git_log(&db);
+    assert_eq!(db.git_exists(), false);
+    assert_eq!(log.len(), 0);
+    db.write(&mut table).unwrap();
+
+    let mut table = db.table("tbl").unwrap();
+    table.insert(Line::new());
+    db.write(&mut table).unwrap();
+
+    let log = _git_log(&db);
+    assert_eq!(db.git_exists(), false);
+    assert_eq!(log.len(), 0);
+}
+
+#[test]
+fn test_git_init_when_db_is_not_empty() {
+    let p = "/tmp/test_git_db_not_empty";
+    let db = _init_db(p, true);
+    assert_eq!(db.git_exists(), false);
+
+    let mut table = db.table("without").unwrap();
+    table.insert(Line::new());
+    db.write(&mut table).unwrap();
+
+    assert_eq!(db.git_exists(), false);
+    assert_eq!(db.use_git, false);
+    assert_eq!(_git_log(&db).len(), 0);
+
+    let mut db = _init_db(p, false);
+    db.set_use_git(true).unwrap();
+    assert_eq!(db.git_exists(), true);
+    let log = _git_log(&db);
+    assert_eq!(log.len(), 1);
+    assert_eq!(log[0], "Update table [.config]");
+}
+
+#[test]
+fn test_use_git() {
+    let p = "/tmp/test_use_git";
+    let mut db = _init_db(p, true);
+    assert_eq!(db.git_exists(), false);
+    assert_eq!(db.use_git, false);
+
+    db.set_use_git(true).unwrap();
+    assert_eq!(db.git_exists(), true);
+    assert_eq!(db.use_git, true);
+
+    let mut table = db.table("test").unwrap();
+    table.insert(Line::new());
+    db.write(&mut table).unwrap();
+
+    let log = _git_log(&db);
+    assert_eq!(log.len(), 2);
+
+    assert_eq!(log[0], "Create table [test]");
+    assert_eq!(log[1], "Update table [.config]");
+
+    let db = _init_db(p, false);
+    assert_eq!(db.use_git, true);
+
+    let mut table = db.table("test").unwrap();
+
+    let log = _git_log(&db);
+    assert_eq!(log.len(), 2);
+
+    table.insert(Line::new());
+
+    let log = _git_log(&db);
+    assert_eq!(log.len(), 2);
+    db.write(&mut table).unwrap();
+
+    let mut table = db.table("tbl").unwrap();
+    table.insert(Line::new());
+    db.write(&mut table).unwrap();
+
+    let log = _git_log(&db);
+    assert_eq!(log.len(), 4);
+    assert_eq!(log[0], "Create table [tbl]");
+    assert_eq!(log[1], "Update table [test]");
+    assert_eq!(log[2], "Create table [test]");
+    assert_eq!(log[3], "Update table [.config]");
+
+}
+
+#[test]
+fn test_git_config() {
+    let p = "/tmp/test_git_config";
     let mut db = _init_db(p, true);
 
     let value = db.get_config(Config::UseGit.value()).unwrap();
@@ -276,6 +391,7 @@ fn test_config() {
         Type::Boolean(v) => assert_eq!(v, false),
         _ => assert!(false)
     }
+    assert_eq!(db.use_git, false);
 
     db.set_use_git(true).unwrap();
 
@@ -284,6 +400,7 @@ fn test_config() {
         Type::Boolean(v) => assert_eq!(v, true),
         _ => assert!(false)
     }
+    assert_eq!(db.use_git, true);
 
     // Reload the DB
     let db = _init_db(p, false);
@@ -292,6 +409,7 @@ fn test_config() {
         Type::Boolean(v) => assert_eq!(v, true),
         _ => assert!(false)
     }
+    assert_eq!(db.use_git, true);
 }
 
 #[test]
@@ -403,4 +521,41 @@ fn _new_test_line() -> Line {
     line.add("col3", Type::from_str("789")).unwrap();
 
     line
+}
+
+fn _git_log(db: &Db) -> Vec<String> {
+    let mut formatted_lines = vec![];
+
+    if db.git_exists() {
+        let output = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&db.path)
+            .arg("log")
+            .arg("--oneline")
+            .output().unwrap();
+
+    
+        let lines = String::from_utf8(output.stdout).unwrap();
+
+        lines.lines().for_each(|line| {
+            let index = _get_first_space(line);
+            let s = String::from(line.split_at(index + 1).1);
+            formatted_lines.push(s);
+        });
+    }
+
+    formatted_lines
+}
+
+fn _get_first_space(str: &str) -> usize {
+    let mut index = 0;
+    for c in str.chars() {
+        if c == ' ' {
+            break;
+        }
+
+        index += 1;
+    }
+
+    index
 }
