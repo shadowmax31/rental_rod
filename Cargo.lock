@@ -65,8 +65,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "rr"
-version = "0.1.0"
+name = "rental_rod"
+version = "0.0.1"
 dependencies = [
  "rust_decimal",
  "rust_decimal_macros",

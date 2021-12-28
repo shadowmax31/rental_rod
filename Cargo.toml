@@ -1,8 +1,10 @@
 [package]
-name = "rr"
-version = "0.1.0"
+name = "rental_rod"
+version = "0.0.1"
 authors = ["Etienne Beaulieu <ety_95@protonmail.com>"]
 edition = "2021"
+license = "GPL-2.0"
+description = "This a flat file database"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
