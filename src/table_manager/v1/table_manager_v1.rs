@@ -82,7 +82,7 @@ impl TableManagerV1 {
 }
 
 #[test]
-fn test_delete() {
+fn test_drop() {
     let tbl = "test_delete";
     let mut m = TableManagerV1::new("/tmp/", tbl).unwrap();
     m.drop().unwrap();
