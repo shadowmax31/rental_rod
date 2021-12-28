@@ -6,6 +6,7 @@ pub mod field_type;
 
 pub mod table;
 
+use std::process::Command;
 use db_error::DbError;
 use uuid::Uuid;
 
@@ -63,6 +64,52 @@ impl Db {
         std::fs::create_dir_all(&self.path)?;
         
         self.init_default_config()?;
+
+        self.git_init()?;
+
+        Ok(())
+    }
+
+    fn git_init(&self) -> Result<(), DbError> {
+        if self.use_git {
+            match Command::new("git")
+                .arg("init")
+                .arg(&self.path)
+                .output() {
+                    Err(error) => return Err(DbError::Custom(error.to_string())),
+                    Ok(_) => ()
+                };
+
+            self.git_commit("Initial commit of the project")?;
+        }
+
+        Ok(())
+    }
+
+    fn git_commit(&self, msg: &str) -> Result<(), DbError> {
+        if self.use_git {
+            match Command::new("git")
+                .arg("-C")
+                .arg(&self.path)
+                .arg("add")
+                .arg(".")
+                .output() {
+                    Err(error) => return Err(DbError::Custom(error.to_string())),
+                    Ok(_) => ()
+                };
+
+            match Command::new("git")
+                .arg("-C")
+                .arg(&self.path)
+                .arg("commit")
+                .arg("-m")
+                .arg(msg)
+                .output() {
+                    Err(error) => return Err(DbError::Custom(error.to_string())),
+                    Ok(_) => ()
+                };
+
+        }
 
         Ok(())
     }
@@ -143,7 +190,7 @@ impl Db {
         }
     }
 
-    pub fn set_use_git(&self, use_git: bool) -> Result<(), DbError> {
+    pub fn set_use_git(&mut self, use_git: bool) -> Result<(), DbError> {
         let id = self.get_config_id()?;
 
         // Get the config line from the config table
@@ -163,9 +210,14 @@ impl Db {
         let value = Type::from_bool(use_git);
         field.set(value);
 
+        self.use_git = use_git;
+        if self.use_git {
+            self.git_init()?;
+        }
 
         // Write to the file
         self.write(&mut table)?;
+
         Ok(())
     }
 
@@ -204,6 +256,9 @@ impl Db {
             table_manager::TableManagerVersion::V1(m) => m.drop()?
         };
 
+        let msg = String::from("Dropping the table ") + "[" + tbl + "]";
+        self.git_commit(&msg)?;
+
         Ok(())
     }
 
@@ -214,6 +269,8 @@ impl Db {
             table_manager::TableManagerVersion::V1(mut m) => m.write(table)?
         };
 
+        let msg = String::from("Commiting changes to ") + "[" + table.get_name() + "]";
+        self.git_commit(&msg)?;
         Ok(())
     }
 
@@ -222,7 +279,7 @@ impl Db {
 #[test]
 fn test_config() {
     let p = "/tmp/test_config";
-    let db = _init_db(p, true);
+    let mut db = _init_db(p, true);
 
     let value = db.get_config(Config::UseGit.value()).unwrap();
     match value {
