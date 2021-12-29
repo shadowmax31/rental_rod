@@ -1,5 +1,3 @@
-use std::ops::Index;
-
 use crate::db::db_error::DbError;
 
 pub struct Lexer<'a> {

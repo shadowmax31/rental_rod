@@ -74,6 +74,14 @@ impl Line {
         None
     }
 
+    pub fn get_read(&self, field_name: &str) -> Option<&Field> {
+        if let Some(i) = self.get_index(field_name) {
+            return Some(&self.fields[i]);
+        }
+
+        None
+    }
+
     pub fn get_fields_name(&self) -> Vec<&str> {
         let mut fields: Vec<&str> = Vec::new();
         for f in &self.fields {
