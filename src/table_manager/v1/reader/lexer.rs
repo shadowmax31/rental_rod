@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::db::db_error::DbError;
 
 pub struct Lexer<'a> {
@@ -17,20 +19,17 @@ impl<'a> Lexer<'a> {
         let mut start_token = 0;
         let mut i = 0;
 
-        while i < text.len() {
-            if let Some(c) = text.chars().nth(i) {
-                if c == ' ' || c == '[' || c == ']' || c == '"' || c == '#' || c == ':' {
-                    if start_token + 1 < i {
-                        // Push token
-                        self.tokens.push(&text[start_token+1..i]);
-                    }
-
-                    // Push token seprator
-                    self.tokens.push(&text[i..i+1]);
-                    start_token = i;
+        for c in text.chars() {
+            if c == ' ' || c == '[' || c == ']' || c == '"' || c == '#' || c == ':' {
+                if start_token + 1 < i {
+                    // Push token
+                    self.tokens.push(&text[start_token+1..i]);
                 }
-            }
 
+                // Push token seprator
+                self.tokens.push(&text[i..i+1]);
+                start_token = i;
+            }
             i += 1;
         }
     }
