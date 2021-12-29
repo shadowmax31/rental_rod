@@ -193,7 +193,7 @@ impl Db {
         }
     }
 
-    pub fn set_use_git(&mut self, use_git: bool) -> Result<(), DbError> {
+    pub fn set_use_git(&mut self, use_git: bool, msg: Option<&str>) -> Result<(), DbError> {
         let id = self.get_config_id()?;
 
         // Get the config line from the config table
@@ -214,6 +214,14 @@ impl Db {
         field.set(value);
 
         self.use_git = use_git;
+        if self.use_git {
+            let msg = match msg {
+                Some(msg) => msg,
+                None => "Commit all changes since last git activation"
+            };
+
+            self.git_commit(msg)?;
+        }
 
         // Write to the file
         self.write(&mut table)?;
@@ -326,11 +334,12 @@ fn test_git_init_when_db_is_not_empty() {
     assert_eq!(_git_log(&db).len(), 0);
 
     let mut db = _init_db(p, false);
-    db.set_use_git(true).unwrap();
+    db.set_use_git(true, None).unwrap();
     assert_eq!(db.git_exists(), true);
     let log = _git_log(&db);
-    assert_eq!(log.len(), 1);
+    assert_eq!(log.len(), 2);
     assert_eq!(log[0], "Update table [.config]");
+    assert_eq!(log[1], "Commit all changes since last git activation");
 }
 
 #[test]
@@ -340,7 +349,7 @@ fn test_use_git() {
     assert_eq!(db.git_exists(), false);
     assert_eq!(db.use_git, false);
 
-    db.set_use_git(true).unwrap();
+    db.set_use_git(true, Some("Test batch commit message")).unwrap();
     assert_eq!(db.git_exists(), true);
     assert_eq!(db.use_git, true);
 
@@ -349,10 +358,11 @@ fn test_use_git() {
     db.write(&mut table).unwrap();
 
     let log = _git_log(&db);
-    assert_eq!(log.len(), 2);
+    assert_eq!(log.len(), 3);
 
     assert_eq!(log[0], "Create table [test]");
     assert_eq!(log[1], "Update table [.config]");
+    assert_eq!(log[2], "Test batch commit message");
 
     let db = _init_db(p, false);
     assert_eq!(db.use_git, true);
@@ -360,12 +370,12 @@ fn test_use_git() {
     let mut table = db.table("test").unwrap();
 
     let log = _git_log(&db);
-    assert_eq!(log.len(), 2);
+    assert_eq!(log.len(), 3);
 
     table.insert(Line::new());
 
     let log = _git_log(&db);
-    assert_eq!(log.len(), 2);
+    assert_eq!(log.len(), 3);
     db.write(&mut table).unwrap();
 
     let mut table = db.table("tbl").unwrap();
@@ -373,11 +383,12 @@ fn test_use_git() {
     db.write(&mut table).unwrap();
 
     let log = _git_log(&db);
-    assert_eq!(log.len(), 4);
+    assert_eq!(log.len(), 5);
     assert_eq!(log[0], "Create table [tbl]");
     assert_eq!(log[1], "Update table [test]");
     assert_eq!(log[2], "Create table [test]");
     assert_eq!(log[3], "Update table [.config]");
+    assert_eq!(log[4], "Test batch commit message");
 
 }
 
@@ -393,7 +404,7 @@ fn test_git_config() {
     }
     assert_eq!(db.use_git, false);
 
-    db.set_use_git(true).unwrap();
+    db.set_use_git(true, None).unwrap();
 
     let value = db.get_config(Config::UseGit.value()).unwrap();
     match value {
