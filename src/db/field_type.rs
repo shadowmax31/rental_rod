@@ -1,6 +1,8 @@
 use chrono::{Utc, DateTime};
 use rust_decimal::Decimal;
 
+use super::db_error::DbError;
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]
@@ -31,6 +33,41 @@ impl Type {
 
     pub fn from_datetime(dt: DateTime<Utc>) -> Type {
         Type::DateTime(dt)
+    }
+
+    pub fn to_str(&self) -> Result<String, DbError> {
+        match self {
+            Type::String(str) => Ok(str.to_owned()),
+            _ => Err(DbError::Custom("Not a String".to_owned()))
+        }
+    }
+
+    pub fn to_int(&self) -> Result<i64, DbError> {
+        match self {
+            Type::Integer(int) => Ok(int.to_owned()),
+            _ => Err(DbError::Custom("Not an Integer".to_owned()))
+        }
+    }
+
+    pub fn to_decimal(&self) -> Result<&Decimal, DbError> {
+        match self {
+            Type::Decimal(dec) => Ok(dec),
+            _ => Err(DbError::Custom("Not a Decimal".to_owned()))
+        }
+    }
+
+    pub fn to_bool(&self) -> Result<bool, DbError> {
+        match self {
+            Type::Boolean(bool) => Ok(bool.to_owned()),
+            _ => Err(DbError::Custom("Not a Boolean".to_owned()))
+        }
+    }
+
+    pub fn to_datetime(&self) -> Result<&DateTime<Utc>, DbError> {
+        match self {
+            Type::DateTime(dt) => Ok(dt),
+            _ => Err(DbError::Custom("Not a DateTime".to_owned()))
+        }
     }
 
     pub fn get_type(&self) -> String {
@@ -89,6 +126,48 @@ mod test {
         assert_eq!(datetime.to_string(), "2020-11-14T10:20:30.149Z");
     }
 
+    #[test]
+    fn test_to() {
+        let int = Type::from_int(0);
+        let str = Type::from_str("hello");
+        let dec = Type::from_decimal(Decimal::from_f64(1.11).unwrap());
+        let boolean = Type::from_bool(false);
+
+        let date = NaiveDate::from_ymd(2021, 12, 15);
+        let time = NaiveTime::from_hms(17, 18, 19);
+        let datetime_utc = DateTime::from_utc(NaiveDateTime::new(date, time), Utc);
+        let datetime = Type::from_datetime(datetime_utc);
+
+        assert_eq!(int.to_int().unwrap(), 0);
+        assert_eq!(int.to_str().is_ok(), false);
+        assert_eq!(int.to_decimal().is_ok(), false);
+        assert_eq!(int.to_bool().is_ok(), false);
+        assert_eq!(int.to_datetime().is_ok(), false);
+
+        assert_eq!(str.to_int().is_ok(), false);
+        assert_eq!(str.to_str().unwrap(), "hello");
+        assert_eq!(str.to_decimal().is_ok(), false);
+        assert_eq!(str.to_bool().is_ok(), false);
+        assert_eq!(str.to_datetime().is_ok(), false);
+
+        assert_eq!(dec.to_int().is_ok(), false);
+        assert_eq!(dec.to_str().is_ok(), false);
+        assert_eq!(dec.to_decimal().unwrap(), &Decimal::from_f64(1.11).unwrap());
+        assert_eq!(dec.to_bool().is_ok(), false);
+        assert_eq!(dec.to_datetime().is_ok(), false);
+
+        assert_eq!(boolean.to_int().is_ok(), false);
+        assert_eq!(boolean.to_str().is_ok(), false);
+        assert_eq!(boolean.to_decimal().is_ok(), false);
+        assert_eq!(boolean.to_bool().unwrap(), false);
+        assert_eq!(boolean.to_datetime().is_ok(), false);
+
+        assert_eq!(datetime.to_int().is_ok(), false);
+        assert_eq!(datetime.to_str().is_ok(), false);
+        assert_eq!(datetime.to_decimal().is_ok(), false);
+        assert_eq!(datetime.to_bool().is_ok(), false);
+        assert_eq!(datetime.to_datetime().unwrap(), &datetime_utc);
+    }
 
     #[test]
     fn test_mix_and_match() {
