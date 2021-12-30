@@ -193,6 +193,10 @@ impl Db {
         }
     }
 
+    pub fn get_use_git(&self) -> bool {
+        self.use_git
+    }
+
     pub fn set_use_git(&mut self, use_git: bool, msg: Option<&str>) -> Result<(), DbError> {
         let id = self.get_config_id()?;
 
