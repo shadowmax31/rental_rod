@@ -95,7 +95,7 @@ impl Line {
 
 #[test]
 fn test_get() {
-    let mut line = _init_line();
+    let line = _init_line();
 
     assert_eq!(line.get("firstname").unwrap().get().to_string(), "Mike");
     assert_eq!(line.get("favorite_number").unwrap().get().to_string(), "1245");
@@ -104,7 +104,7 @@ fn test_get() {
     assert_eq!(line.get("other_name").is_none(), true);
     assert_eq!(line.get("").is_none(), true);
     
-    let mut empty_line = Line::new();
+    let empty_line = Line::new();
     assert_eq!(empty_line.get("firstname").is_none(), true);
 }
 

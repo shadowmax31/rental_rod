@@ -189,7 +189,7 @@ fn test_read() {
    _insert(&mut m);
    _insert(&mut m);
 
-   let mut table = m.read().unwrap();
+   let table = m.read().unwrap();
    assert_eq!(table.get_lines().len(), 3);
 
    m.drop().unwrap();

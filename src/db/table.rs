@@ -217,7 +217,7 @@ fn test_find() {
 
 #[test]
 fn test_find_where() {
-    let mut table = _init_basic_table();
+    let table = _init_basic_table();
 
     let lines = table.find(|line| {
         if let Some(field) = line.get("lastname") {
