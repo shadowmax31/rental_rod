@@ -50,8 +50,12 @@ impl Table {
         &self.name
     }
 
-    pub fn get_lines(&mut self) -> Vec<&mut Line> {
+    pub fn get_lines(&self) -> Vec<&Line> {
         self.find(|_| true)
+    }
+
+    pub fn get_lines_mut(&mut self) -> Vec<&mut Line> {
+        self.find_mut(|_| true)
     }
 
     pub fn get_line_index(&self, id: &Uuid) -> Option<usize> {
@@ -67,7 +71,20 @@ impl Table {
         None
     }
 
-    pub fn find<F>(&mut self, mut filter: F) -> Vec<&mut Line>
+    pub fn find<F>(&self, filter: F) -> Vec<&Line>
+        where F: Fn(&Line) -> bool {
+        let mut list: Vec<&Line> = Vec::new();
+
+        for line in &self.lines {
+            if filter(line) {
+                list.push(line);
+            }
+        }
+        
+        list
+    }
+
+    pub fn find_mut<F>(&mut self, mut filter: F) -> Vec<&mut Line>
         where F: FnMut(&mut Line) -> bool {
         let mut list: Vec<&mut Line> = Vec::new();
 
@@ -184,17 +201,17 @@ fn test_should_not_allow_identical_id() {
 fn test_find() {
     let mut table = _init_basic_table();
 
-    let list = table.find(|l| l.has_with("firstname", "Simon"));
+    let list = table.find_mut(|l| l.has_with("firstname", "Simon"));
     assert_eq!(list.len(), 2);
     assert_eq!(list[0].get_id().to_string(), "a60cbdfa-4c46-438c-8ad8-45bdd2063a56");
     assert_eq!(list[1].get_id().to_string(), "49295823-29c2-1dba-2d14-ad498654ecc2");
 
 
-    let list = table.find(|l| l.has_with("favorite_number", "1245"));
+    let list = table.find_mut(|l| l.has_with("favorite_number", "1245"));
     assert_eq!(list.len(), 1);
     assert_eq!(list[0].get_id().to_string(), "84e4eedf-a383-457e-aa73-d26c646762ba");
 
-    let list = table.find(|l| l.has_with("a_field", "some value"));
+    let list = table.find_mut(|l| l.has_with("a_field", "some value"));
     assert_eq!(list.len(), 0);
 }
 

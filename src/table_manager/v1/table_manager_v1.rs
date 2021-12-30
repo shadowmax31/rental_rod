@@ -97,7 +97,7 @@ impl TableManagerV1 {
     }
 
 
-    fn convert_to_str(lines: &Vec<&mut Line>) -> Vec<String> {
+    fn convert_to_str(lines: &Vec<&Line>) -> Vec<String> {
         let mut str_lines: Vec<String> = Vec::new();
         for line in lines {
             str_lines.push(line_to_str(&line));

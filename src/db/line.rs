@@ -66,7 +66,7 @@ impl Line {
         None
     }
 
-    pub fn get(&mut self, field_name: &str) -> Option<&mut Field> {
+    pub fn get_mut(&mut self, field_name: &str) -> Option<&mut Field> {
         if let Some(i) = self.get_index(field_name) {
             return Some(&mut self.fields[i]);
         }
@@ -74,7 +74,7 @@ impl Line {
         None
     }
 
-    pub fn get_read(&self, field_name: &str) -> Option<&Field> {
+    pub fn get(&self, field_name: &str) -> Option<&Field> {
         if let Some(i) = self.get_index(field_name) {
             return Some(&self.fields[i]);
         }

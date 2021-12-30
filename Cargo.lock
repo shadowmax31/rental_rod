@@ -89,7 +89,7 @@ dependencies = [
 
 [[package]]
 name = "rental_rod"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "rust_decimal",

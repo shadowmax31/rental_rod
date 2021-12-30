@@ -204,7 +204,7 @@ impl Db {
         };
 
         // Get the correct config field from the config line
-        let field = match line.get(Config::UseGit.value()) {
+        let field = match line.get_mut(Config::UseGit.value()) {
             Some(l) => l,
             None => return Err(DbError::Custom(String::from("The field [") + Config::UseGit.value() + "] was not found..."))
         };
