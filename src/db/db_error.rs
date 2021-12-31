@@ -1,8 +1,20 @@
+//! This modules contains everything related to error handling
+//! 
+
 use std::fmt;
 
 #[derive(Debug)]
+/**
+ * This is the global type used for handling errors
+ */
 pub enum DbError {
+    /**
+     * Basic String error
+     */
     Custom(String),
+    /**
+     * Reference to a std::io::Error
+     */
     IoError(std::io::Error),
 }
 
