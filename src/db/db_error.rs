@@ -1,5 +1,4 @@
 //! This modules contains everything related to error handling
-//! 
 
 use std::fmt;
 

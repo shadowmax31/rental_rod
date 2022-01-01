@@ -1,3 +1,4 @@
+//! This contains all the implementation of the Type (which contains values)
 use chrono::{Utc, DateTime};
 use rust_decimal::Decimal;
 
@@ -6,35 +7,71 @@ use super::db_error::DbError;
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]
+/**
+ * This Enum contains all the different types and values that a Field can hold
+ */
 pub enum Type {
+    /**
+     * Allow to save a String
+     */
     String(String),
+    /**
+     * Allow to save an Integer
+     */
     Integer(i64),
+    /**
+     * Allow to save numbers with good reliable precision
+     */
     Decimal(Decimal),
+    /**
+     * Allow to save a bool
+     */
     Boolean(bool),
+    /**
+     * Allow to save a DateTime with Utc as timezone
+     */
     DateTime(DateTime<Utc>)
 }
 
 impl Type {
+    /**
+     * Helper to build a type from a string slice
+     */
     pub fn from_str(str: &str) -> Type {
         Type::String(String::from(str))
     }
 
+    /**
+     * Helper to build a type from a i64
+     */
     pub fn from_int(int: i64) -> Type {
         Type::Integer(int)
     }
 
+    /**
+     * Helper to build a type from a Decimal
+     */
     pub fn from_decimal(dec: Decimal) -> Type {
         Type::Decimal(dec)
     }
 
+    /**
+     * Helper to build a type from a bool
+     */
     pub fn from_bool(boolean: bool) -> Type {
         Type::Boolean(boolean)
     }
 
+    /**
+     * Helper to build a type from a DateTime<Utc>
+     */
     pub fn from_datetime(dt: DateTime<Utc>) -> Type {
         Type::DateTime(dt)
     }
 
+    /**
+     * Helper to return the String part of the Type
+     */
     pub fn to_str(&self) -> Result<String, DbError> {
         match self {
             Type::String(str) => Ok(str.to_owned()),
@@ -42,6 +79,9 @@ impl Type {
         }
     }
 
+    /**
+     * Helper to return the Integer part of the Type
+     */
     pub fn to_int(&self) -> Result<i64, DbError> {
         match self {
             Type::Integer(int) => Ok(int.to_owned()),
@@ -49,6 +89,9 @@ impl Type {
         }
     }
 
+    /**
+     * Helper to return the Decimal part of the Type
+     */
     pub fn to_decimal(&self) -> Result<&Decimal, DbError> {
         match self {
             Type::Decimal(dec) => Ok(dec),
@@ -56,6 +99,9 @@ impl Type {
         }
     }
 
+    /**
+     * Helper to return the Boolean part of the Type
+     */
     pub fn to_bool(&self) -> Result<bool, DbError> {
         match self {
             Type::Boolean(bool) => Ok(bool.to_owned()),
@@ -63,6 +109,9 @@ impl Type {
         }
     }
 
+    /**
+     * Helper to return the DateTime part of the Type
+     */
     pub fn to_datetime(&self) -> Result<&DateTime<Utc>, DbError> {
         match self {
             Type::DateTime(dt) => Ok(dt),
@@ -70,6 +119,9 @@ impl Type {
         }
     }
 
+    /**
+     * Return a String representation of Type for each part of the enum.
+     */
     pub fn get_type(&self) -> String {
         match self {
             Type::String(_) => "string",
@@ -80,6 +132,9 @@ impl Type {
         }.to_owned()
     }
 
+    /**
+     * Convert ANY part of type to a String
+     */
     pub fn to_string(&self) -> String {
         match self {
             Type::String(v) => v.to_owned(),

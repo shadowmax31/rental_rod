@@ -1,3 +1,13 @@
+//! This module holds the implementation and tests related to a Line
+//! 
+//! A line is a representation of a list of fields. Each field has to
+//! be unique.
+//! 
+//! # Example
+//! ```
+//! let line = Line::new();
+//! line.add("field_name", Type::from_int(123));
+//! ``` 
 use uuid::Uuid;
 
 use super::field::Field;
@@ -5,24 +15,41 @@ use super::db_error::DbError;
 use super::field_type::Type;
 
 #[derive(Debug)]
+/**
+ * Struct for a Line (a Table contains multiple line)
+ * 
+ * It needs an ID and a list of fields
+ */
 pub struct Line {
     id: Uuid,
     fields: Vec<Field>
 }
 
 impl Line {
+    /**
+     * Create a new line with a random Uuid
+     */
     pub fn new() -> Line {
         Line::new_with_id(Uuid::new_v4(), vec![])
     }
 
+    /**
+     * Create a new line by supplying an Id
+     */
     pub fn new_with_id(id: Uuid, fields: Vec<Field>) -> Line {
         Line { id, fields }
     }
 
+    /**
+     * Read the Id of the line
+     */
     pub fn get_id(&self) -> &Uuid {
         &self.id
     }
 
+    /**
+     * Check if the line has a field of "field_name" with the value "with"
+     */
     pub fn has_with(&mut self, field_name: &str, with: &str) -> bool {
         if let Some(f) = self.get(field_name) {
             return f.get() == &Type::from_str(with);
@@ -31,10 +58,18 @@ impl Line {
         false
     }
 
+    /**
+     * Return a reference to the list of fields
+     */
     pub fn get_fields(&self) -> &Vec<Field> {
         &self.fields
     }
 
+    /**
+     * Add a new field with the specified Value/Type
+     * 
+     * Will Throw an error if the field already exists
+     */
     pub fn add(&mut self, field_name: &str, value: Type) -> Result<(), DbError> {
         let fields = self.get_fields_name();
         if fields.contains(&field_name) {
@@ -46,13 +81,19 @@ impl Line {
 
         Ok(())
     }
-
+    
+    /**
+     * Remove a field by name
+     */
     pub fn remove(&mut self, field_name: &str) {
         if let Some(i) = self.get_index(field_name) {
             self.fields.remove(i);
         }
     }
 
+    /**
+     * Find the index of the field (from it's name)
+     */
     pub fn get_index(&self, field_name: &str) -> Option<usize> {
         let mut i: usize = 0;
         for field in &self.fields {
@@ -66,6 +107,9 @@ impl Line {
         None
     }
 
+    /**
+     * Return a mutable Field (from it's name)
+     */
     pub fn get_mut(&mut self, field_name: &str) -> Option<&mut Field> {
         if let Some(i) = self.get_index(field_name) {
             return Some(&mut self.fields[i]);
@@ -74,6 +118,9 @@ impl Line {
         None
     }
 
+    /**
+     * Return an immutable Field (from it's name)
+     */
     pub fn get(&self, field_name: &str) -> Option<&Field> {
         if let Some(i) = self.get_index(field_name) {
             return Some(&self.fields[i]);
@@ -82,6 +129,9 @@ impl Line {
         None
     }
 
+    /**
+     * Return the list of fields name
+     */
     pub fn get_fields_name(&self) -> Vec<&str> {
         let mut fields: Vec<&str> = Vec::new();
         for f in &self.fields {

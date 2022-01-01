@@ -1,3 +1,6 @@
+//! This module contains the Database
+//! 
+//! This is the place where you can query the data.
 pub mod db_error;
 pub mod line;
 pub mod field;
@@ -16,6 +19,11 @@ use crate::table_manager::{self, TableManager};
 
 use self::{line::Line, field_type::Type};
 
+/**
+* This is the PUBLIC interface to the Database.
+*
+* It allows to get tables by name, it creates the basic file and folder structure.
+*/
 pub struct Db {
     path: String,
     use_git: bool
@@ -33,11 +41,6 @@ impl Config {
     }
 }
 
-/**
-* This is the PUBLIC interface to the Database.
-*
-* It allows to get tables by name, it creates the basic file and folder structure.
-*/
 impl Db {
     /**
     * Initialize a database

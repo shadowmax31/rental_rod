@@ -1,22 +1,23 @@
+//! Everythin related to a table
 use super::line::Line;
 use super::field::Field;
 use super::db_error::DbError;
 use uuid::Uuid;
 
+/**
+ * The Table object allows to do any operation on the data.
+ * 
+ * It allows to delete lines, update lines, delele fields (all in memory), etc.
+ */
 pub struct Table {
     name: String,
     lines: Vec<Line>
 }
 
-/**
- * The Table object should allow to do every operation on the Database.
- * 
- * It should allow to delete lines, update lines, delele fields (all in memory)
- * It does not know about any file format.
- * 
- * To manage the undos, it should also manage a "dirty" field to know what was changed (maybe...)
- */
 impl Table {
+    /**
+     * Create a new table
+     */
     pub fn new(name: &str, lines: Vec<Line>) -> Result<Table, DbError> {
         if let Some(id) = Table::check_for_duplicate_id(&lines) {
             let msg = String::from("The id [") + &id.to_string() + "] is used multiple times";
@@ -46,18 +47,30 @@ impl Table {
         found
     }
 
+    /**
+     * Return the name of the table
+     */
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    /**
+     * Return all the lines
+     */
     pub fn get_lines(&self) -> Vec<&Line> {
         self.find(|_| true)
     }
 
+    /**
+     * Return a mutable version of the lines
+     */
     pub fn get_lines_mut(&mut self) -> Vec<&mut Line> {
         self.find_mut(|_| true)
     }
 
+    /**
+     * Return the index of a line based on it's Id
+     */
     pub fn get_line_index(&self, id: &Uuid) -> Option<usize> {
         let mut i: usize = 0;
         for line in &self.lines {
@@ -71,6 +84,12 @@ impl Table {
         None
     }
 
+    /**
+     * Return a filtered list of lines
+     * 
+     * This is the equivalent of doing a:
+     * SELECT * FROM table_name WHERE field = 'some value'
+     */
     pub fn find<F>(&self, filter: F) -> Vec<&Line>
         where F: Fn(&Line) -> bool {
         let mut list: Vec<&Line> = Vec::new();
@@ -84,6 +103,9 @@ impl Table {
         list
     }
 
+    /**
+     * Like find, but return a list of mutable lines
+     */
     pub fn find_mut<F>(&mut self, mut filter: F) -> Vec<&mut Line>
         where F: FnMut(&mut Line) -> bool {
         let mut list: Vec<&mut Line> = Vec::new();
@@ -97,6 +119,9 @@ impl Table {
         list
     }
 
+    /**
+     * Return a mutable line based on it's id
+     */
     pub fn find_by_id(&mut self, id: &Uuid) -> Option<&mut Line> {
         let mut found: Option<&mut Line> = None;
         for line in &mut self.lines {
@@ -109,16 +134,27 @@ impl Table {
         found
     }
 
+    /**
+     * Insert a new line in the table
+     */
     pub fn insert(&mut self, line: Line) {
         self.lines.push(line);
     }
 
+    /**
+     * Delete a line
+     */
     pub fn delete(&mut self, id: &Uuid) {
         if let Some(index) = self.get_line_index(id) {
             self.lines.remove(index);
         }
     }
 
+    /**
+     * Print a line to stdout
+     * 
+     * This is more for debuging
+     */
     pub fn print(&self) {
         for line in &self.lines {
             println!("{:?}", line);
