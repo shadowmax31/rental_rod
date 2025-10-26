@@ -1,6 +1,6 @@
 [package]
 name = "rental_rod"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Etienne Beaulieu <ety_95@protonmail.com>"]
 edition = "2021"
 license = "GPL-2.0"
@@ -13,3 +13,4 @@ uuid = { version = "0.8", features = ["v4"] }
 rust_decimal = "1.19"
 rust_decimal_macros = "1.19"
 chrono = "0.4"
+thiserror = "2.0.17"
