@@ -4,19 +4,19 @@ use std::vec;
 
 use crate::db::db_error::DbError;
 use crate::db::field_type::Type;
+use crate::db::line::Line;
 use crate::db::table::Table;
 use crate::table_manager::TableManager;
 use crate::util::file;
-use crate::db::line::Line;
 
-use super::reader;
 use super::line_to_str::line_to_str;
+use super::reader;
 
 const TBL_VERSION: &str = "#v1.0#";
 
 pub struct TableManagerV1 {
     tbl_path: String,
-    tbl_name: String
+    tbl_name: String,
 }
 
 impl TableManager for TableManagerV1 {
@@ -54,20 +54,18 @@ impl TableManager for TableManagerV1 {
     }
 
     fn is_of_type(base_path: &str, tbl: &str) -> bool {
-
         let of_type = match TableManagerV1::get_fullpath(base_path, tbl) {
             Ok(p) => {
                 let mut is_v1 = false;
-                let contents =file::read(&p).unwrap_or(Vec::new());
+                let contents = file::read(&p).unwrap_or(Vec::new());
                 if contents.len() > 0 {
                     is_v1 = contents[0] == TBL_VERSION;
                 }
-                
-                is_v1
-            },
-            Err(_) => false
-        };
 
+                is_v1
+            }
+            Err(_) => false,
+        };
 
         of_type
     }
@@ -79,7 +77,7 @@ impl TableManagerV1 {
 
         let m = TableManagerV1 {
             tbl_path: String::from(fullpath),
-            tbl_name: String::from(tbl)
+            tbl_name: String::from(tbl),
         };
 
         Ok(m)
@@ -87,15 +85,18 @@ impl TableManagerV1 {
 
     fn get_fullpath(base_path: &str, tbl: &str) -> Result<String, DbError> {
         let with_ext = tbl.to_owned();
-        let fullpath = std::path::Path::new(base_path).join(with_ext); 
+        let fullpath = std::path::Path::new(base_path).join(with_ext);
         let fullpath = match fullpath.to_str() {
             Some(p) => p,
-            None => return Err(DbError::Custom(String::from("The path to the table is empty")))
+            None => {
+                return Err(DbError::Custom(String::from(
+                    "The path to the table is empty",
+                )))
+            }
         };
 
         Ok(String::from(fullpath))
     }
-
 
     fn convert_to_str(lines: &Vec<&Line>) -> Vec<String> {
         let mut str_lines: Vec<String> = Vec::new();
@@ -117,7 +118,6 @@ fn test_is_of_type() {
     file::remove_file(&fullpath).unwrap();
     assert_eq!(TableManagerV1::is_of_type(base_path, tbl), false);
 
-
     // Check empty file
     file::write(&fullpath, "", &vec![]).unwrap();
     assert_eq!(TableManagerV1::is_of_type(base_path, tbl), false);
@@ -127,7 +127,12 @@ fn test_is_of_type() {
     assert_eq!(TableManagerV1::is_of_type(base_path, tbl), true);
 
     // Check file with the correct version (and data)
-    file::write(&fullpath, TBL_VERSION, &vec!["line1".to_owned(), "line2".to_owned()]).unwrap();
+    file::write(
+        &fullpath,
+        TBL_VERSION,
+        &vec!["line1".to_owned(), "line2".to_owned()],
+    )
+    .unwrap();
     assert_eq!(TableManagerV1::is_of_type(base_path, tbl), true);
 
     // Check file with wrong version
@@ -165,7 +170,6 @@ fn test_drop() {
     assert_eq!(_count_lines(&m.tbl_path), 0);
 }
 
-
 #[test]
 fn test_insert() {
     let mut m = TableManagerV1::new("/tmp/", "test_insert_tbl").unwrap();
@@ -183,16 +187,16 @@ fn test_insert() {
 
 #[test]
 fn test_read() {
-   let mut m = TableManagerV1::new("/tmp", "test_read_tbl").unwrap();
+    let mut m = TableManagerV1::new("/tmp", "test_read_tbl").unwrap();
 
-   _insert(&mut m);
-   _insert(&mut m);
-   _insert(&mut m);
+    _insert(&mut m);
+    _insert(&mut m);
+    _insert(&mut m);
 
-   let table = m.read().unwrap();
-   assert_eq!(table.get_lines().len(), 3);
+    let table = m.read().unwrap();
+    assert_eq!(table.get_lines().len(), 3);
 
-   m.drop().unwrap();
+    m.drop().unwrap();
 }
 
 fn _insert(m: &mut TableManagerV1) {
@@ -201,7 +205,7 @@ fn _insert(m: &mut TableManagerV1) {
     line.add("Col1", Type::from_str("123")).unwrap();
 
     table.insert(line);
-    
+
     assert_eq!(m.write(&mut table).is_ok(), true);
 }
 
@@ -210,7 +214,7 @@ fn _count_lines(path: &str) -> usize {
 
     let count = match file {
         Ok(file) => io::BufReader::new(file).lines().count(),
-        Err(_) => 0
+        Err(_) => 0,
     };
 
     count
